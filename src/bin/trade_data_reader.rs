@@ -82,7 +82,6 @@ fn process_line(line: String, stats: &mut TradeStats) {
         }
 
         NYSEMsg::T220 => {
-            stats.t220_count += 1;
             stats.t220_stats.process_t220(&toks);
         }
         NYSEMsg::ERROR => {
