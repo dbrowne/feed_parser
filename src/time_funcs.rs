@@ -39,7 +39,7 @@ pub trait Hhmmss {
     fn sns(&self) -> (i64, i64);
     /// Pretty-prints a chrono::Duration in the form `HH:MM:SS.xxxxxxxxx`
     fn hhmmss(&self) -> String {
-        let (s, ns) = self.sns();
+        let (s, _) = self.sns();
         s2hhmmss(s)
     }
     /// Pretty-prints a chrono::Duration in the form `HH:MM:SS.xxxxxxxxx`

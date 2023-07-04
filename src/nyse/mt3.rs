@@ -174,7 +174,7 @@ impl PriceResolutionMap {
 #[cfg(test)]
 mod  test{
     #[test]
-    fn test_MarketIDMap() {
+    fn test_market_idmap() {
         use super::*;
         let market_id_map = MarketIDMap::new();
         assert_eq!(market_id_map.get(1), Some(&MarketID::NYSE));
@@ -189,7 +189,7 @@ mod  test{
 
 
     #[test]
-    fn test_SecurityTypeMap() {
+    fn test_security_type_map() {
         use super::*;
         let security_type_map = SecurityTypeMap::new();
         assert_eq!(security_type_map.get('A'), Some(&SecuryType::ADR));
@@ -211,7 +211,7 @@ mod  test{
         assert_eq!(security_type_map.get('Y'), Some(&SecuryType::War));
     }
     #[test]
-    fn test_PriceResolutionMap() {
+    fn test_price_resolution_map() {
         use super::*;
         let price_resolution_map = PriceResolutionMap::new();
         assert_eq!(price_resolution_map.get(0), Some(&PriceResolution::AllPenny));

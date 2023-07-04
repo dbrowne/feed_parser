@@ -242,7 +242,7 @@ impl HaltConditionMap {
 }
 
 #[derive(PartialEq, Debug)]
-enum SSRState {
+pub  enum SSRState {
     // ‘~’ – No Short Sale in Effect
     NoSSR,
     // • ‘E’ – Short Sale Restriction in Effect
@@ -305,7 +305,7 @@ impl MarketStateMap {
 #[cfg(test)]
 mod test {
     #[test]
-    fn t_SSRTexIDMap() {
+    fn t_ssrtex_idmap() {
         let map = super::SSRTExIDMap::new();
         assert_eq!(map.get('N'), Some(&super::SSRTexID::NYSE));
         assert_eq!(map.get('P'), Some(&super::SSRTexID::NYSEArca));
@@ -330,7 +330,7 @@ mod test {
     }
 
     #[test]
-    fn t_SecurityStatusMap() {
+    fn t_security_status_map() {
         let map = super::SecurityStatusMap::new();
         assert_eq!(map.get('4'), Some(&super::SecurityStatus::Halt));
         assert_eq!(map.get('5'), Some(&super::SecurityStatus::Resume));
@@ -350,7 +350,7 @@ mod test {
     }
 
     #[test]
-    fn t_HaltCondidtionMap() {
+    fn t_halt_condidtion_map() {
         let map = super::HaltConditionMap::new();
         assert_eq!(map.get('~'), Some(&super::HaltCondition::NotDelayed));
         assert_eq!(map.get('D'), Some(&super::HaltCondition::NewsRel));
@@ -373,7 +373,7 @@ mod test {
     }
 
     #[test]
-    fn t_SSRStateMap() {
+    fn t_ssrstate_map() {
         let map = super::SSRStateMap::new();
         assert_eq!(map.get('~'), Some(&super::SSRState::NoSSR));
         assert_eq!(map.get('E'), Some(&super::SSRState::SSR));
@@ -381,7 +381,7 @@ mod test {
     }
 
     #[test]
-    fn t_NarketStateNap() {
+    fn t_narket_state_nap() {
         let map = super::MarketStateMap::new();
         assert_eq!(map.get('P'), Some(&super::MarketState::PreOp));
         assert_eq!(map.get('E'), Some(&super::MarketState::EarlySess));
