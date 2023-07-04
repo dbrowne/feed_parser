@@ -37,7 +37,7 @@ use std::collections::HashMap;
 
 pub struct T3 {
     //symbol Index Mapping Message
-    pub msg_type: i8,
+    pub msg_type: u8,
     pub seq_num: i32,
     pub symbol: String,
     pub market_id: i32,

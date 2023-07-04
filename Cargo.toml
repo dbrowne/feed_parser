@@ -1,12 +1,20 @@
 [package]
 name = "feed_parser"
+authors = ["Dwight Browne <dwight@dwightjbrowne.com>"]
+description = "POC parser for NYSE Historical Data"
+license = "MIT"
+README = "README.md"
+repository = "https://github.com/dwightbrowne/feed_parser"
+keywords = [ "Finance", "NYSE", "Historical Data", "Parser" ]
+categories = ["finance"]
+
+
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-lazy_static = "1.4.0"
-csv = "1.2.1"
 chrono = "0.4.19"
 time = "0.3.21"
+dotenvy = "0.15.7"

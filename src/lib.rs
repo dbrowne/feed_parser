@@ -1,4 +1,4 @@
-mod nyse;
+pub mod nyse;
 mod time_funcs;
 
 

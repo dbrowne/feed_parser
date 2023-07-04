@@ -35,12 +35,11 @@
 
 
 use std::collections::HashMap;
-use crate::nyse::mt34::SecurityStatus::SSRA;
 
 
 pub struct T34 {
     // Security Status Message
-    pub msg_type: i32,
+    pub msg_type: u8,
     pub seq_num: i32,
     pub source_time: String,
     // really in HH:MM:SS.nnnnnnnnn format

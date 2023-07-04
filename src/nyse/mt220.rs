@@ -33,7 +33,7 @@ use std::collections::HashMap;
 
 pub struct T220 {
     //Trade Message
-    pub msg_type: i8,
+    pub msg_type: u8,
     pub seq_num: i32,
     pub source_time: String,
     // really in HH:MM:SS.nnnnnnnnn format
