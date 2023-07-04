@@ -73,17 +73,17 @@ impl MsgStats {
     }
 }
 
-
-pub struct SymbolTable{
+#[derive(Debug, Clone,PartialEq)]
+pub struct TradeStats {
     count: HashMap<String, i32> ,
     avg_price: HashMap<String, f64>,
     total_volume: HashMap<String, i32>,
 
 }
 
-impl SymbolTable {
-    pub fn new() -> SymbolTable {
-        SymbolTable {
+impl TradeStats {
+    pub fn new() -> TradeStats {
+        TradeStats {
             count: HashMap::new(),
             avg_price: HashMap::new(),
             total_volume: HashMap::new(),
@@ -100,6 +100,21 @@ impl SymbolTable {
 }
 
 
+#[derive(Debug)]
+pub  struct Stats{
+    pub msg_stats: MsgStats,
+    pub trade_stats: TradeStats,
+}
+
+impl Stats {
+    pub  fn new() -> Stats {
+        Stats {
+            msg_stats: MsgStats::new(),
+            trade_stats: TradeStats::new(),
+        }
+    }
+
+}
 
 #[cfg(test)]
 mod  test {
@@ -109,7 +124,7 @@ mod  test {
         use super::NYSEMsg;
         assert_eq!(get_msg_type("3"), NYSEMsg::T003);
         assert_eq!(get_msg_type("34"), NYSEMsg::T034);
-        assert_eq!(get_msg_type("202"), NYSEMsg::T202);
+        assert_eq!(get_msg_type("202"), NYSEMsg::T220);
         assert_eq!(get_msg_type("0"), NYSEMsg::ERROR);
     }
 
@@ -123,15 +138,15 @@ mod  test {
         stats.add(NYSEMsg::T034);
         stats.add(NYSEMsg::T034);
         stats.add(NYSEMsg::T034);
-        stats.add(NYSEMsg::T202);
-        stats.add(NYSEMsg::T202);
-        stats.add(NYSEMsg::T202);
-        stats.add(NYSEMsg::T202);
-        stats.add(NYSEMsg::T202);
-        stats.add(NYSEMsg::T202);
-        stats.add(NYSEMsg::T202);
+        stats.add(NYSEMsg::T220);
+        stats.add(NYSEMsg::T220);
+        stats.add(NYSEMsg::T220);
+        stats.add(NYSEMsg::T220);
+        stats.add(NYSEMsg::T220);
+        stats.add(NYSEMsg::T220);
+        stats.add(NYSEMsg::T220);
         assert_eq!(stats.msg_count.get(&NYSEMsg::T003).unwrap(), &2);
         assert_eq!(stats.msg_count.get(&NYSEMsg::T034).unwrap(), &3);
-        assert_eq!(stats.msg_count.get(&NYSEMsg::T202).unwrap(), &7);
+        assert_eq!(stats.msg_count.get(&NYSEMsg::T220).unwrap(), &7);
     }
 }

@@ -35,14 +35,13 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::process::exit;
-use feed_parser::nyse::base_funcs::{NYSEMsg, get_msg_type, MsgStats};
+use feed_parser::nyse::base_funcs::{NYSEMsg, get_msg_type, MsgStats, TradeStats};
 
-fn  main(){
+fn main() {
     dotenv().ok();
     let data_file = env::var("NYSE_TRADE_DATA_FILE").expect("No Data file found!");
     println!("Data file is {}", data_file);
     process_file(data_file);
-
 }
 
 
@@ -55,13 +54,11 @@ fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
 
 fn process_file(data_file: String) {
     println!("Processing file {}", data_file);
-    let  mut messages = MsgStats::new();
-    if  let  Ok(lines) = read_lines(data_file) {
+    let mut stats = TradeStats::new();
+    if let Ok(lines) = read_lines(data_file) {
         for line in lines {
             if let Ok(ip) = line {
-               let  msg_type =  process_line(ip);
-
-                messages.add(msg_type);
+                let msg_type = process_line(ip, &mut stats);
             }
         }
         println!("messages: {:?}", messages);
@@ -69,10 +66,35 @@ fn process_file(data_file: String) {
 }
 
 
-fn  process_line(line: String) -> NYSEMsg{
+fn process_line(line: String, stats: &mut TradeStats) {
+    //todo!(Need some error handling here)
     let toks: Vec<String> = line.split(',')
         .map(|s| s.to_string())
         .collect();
-    get_msg_type(&toks[0])
 
+    let msg_type = get_msg_type(&toks[0]);
+
+    stats::msg_stats.add_msg(msg_type);
+
+    match msg_type {
+        (NYSEMsg::T003 | NYSEMsg::T034)=> {
+
+        }
+
+        NYSEMsg::T220 => {
+            stats.t220_count += 1;
+            stats.t220_stats.process_t220(&toks);
+        }
+        NYSEMsg::ERROR => {
+            println!("Error: {}", line);
+            exit(1);
+        }
+    }
+}
+
+fn process_trades(inp: Vec<String>) {
+    println!("Processing trades");
+    for line in inp {
+        println!("line: {}", line);
+    }
 }

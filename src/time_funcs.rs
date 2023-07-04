@@ -108,6 +108,20 @@ fn sms2hhmmsnn(s: i64, ns: i64) -> String {
     )
 }
 
+pub  fn time_to_dec(time: &str) -> Result<f64, Box<dyn std::error::Error>> {
+    let parts: Vec<&str> = time.split(':').collect();
+
+    if parts.len() != 3 {
+        return Err(From::from("Incorrect format. Expected HH:MM:SS.nnnnnnnnn"));
+    }
+
+    let hours: f64 = parts[0].parse()?;
+    let minutes: f64 = parts[1].parse()?;
+    let seconds: f64 = parts[2].parse()?;
+
+    Ok(hours * 3600.0 + minutes * 60.0 + seconds)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -123,5 +137,13 @@ mod tests {
         let time_duration = time::Duration::new(3661, 534_100_100);
         assert_eq!(&time_duration.hhmmss(), "01:01:01");
         assert_eq!(&time_duration.hhmmssnn(), "01:01:01.534100100");
+    }
+
+
+    #[test]
+    fn test_time_to_dec() {
+        let time = "09:30:01.00005090000";
+        let dec = time_to_dec(time).unwrap();
+        assert_eq!(dec, 34201.0000509);
     }
 }
