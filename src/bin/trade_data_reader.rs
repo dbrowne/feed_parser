@@ -39,13 +39,18 @@ use std::process::exit;
 use feed_parser::nyse::mt220::T220;
 use feed_parser::nyse::base_funcs::{NYSEMsg, get_msg_type, Stats};
 use thousands::Separable;
-use std::time::{Duration, Instant};
+use std::time::Instant;
+use walkdir::WalkDir;
 
 fn main() {
     dotenv().ok();
-    let data_file = env::var("NYSE_TRADE_DATA_FILE").expect("No Data file found!");
-    println!("Data file is {}", data_file);
-    process_file(data_file);
+    let data_dir = env::var("NYSE_TRADE_DATA_DIR").expect("No Data file found!");
+    for file in WalkDir::new(data_dir).into_iter().filter_map(|file| file.ok()) {
+        if file.file_type().is_file() {
+            process_file(file.path().display().to_string());
+            println!("\n\n-----------------------------------\n\n");
+        }
+    }
 }
 
 
@@ -57,19 +62,19 @@ fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
 
 
 fn process_file(data_file: String) {
-    let  start = Instant::now();
+    let start = Instant::now();
     println!("Processing file {}", data_file);
     let mut stats = Stats::new();
-    let  mut ctr = 0;
+    let mut ctr = 0;
     if let Ok(lines) = read_lines(data_file) {
         for line in lines {
             if let Ok(ip) = line {
                 ctr += 1;
                 let msg_type = process_line(ip, &mut stats);
-                match  msg_type{
+                match msg_type {
                     Ok(()) => (),
                     Err(e) => {
-                        println!("error processing line :{}",ctr);
+                        println!("error processing line :{}", ctr);
                         println!("error: {}", e);
                         exit(1);
                     }
@@ -80,9 +85,9 @@ fn process_file(data_file: String) {
 
     let duration = start.elapsed();
     println!("Processed {} records in {} seconds", ctr.separate_with_commas(), duration.as_secs().separate_with_commas());
-    println!("Symbol Index Mapping Messages {}",stats.msg_stats.msg_count[&NYSEMsg::T003].separate_with_commas());
-    println!("Symbol Security Status Message {}",stats.msg_stats.msg_count[&NYSEMsg::T034].separate_with_commas());
-    println!("Trade Messages {}",stats.msg_stats.msg_count[&NYSEMsg::T220].separate_with_commas());
+    println!("Symbol Index Mapping Messages {}", stats.msg_stats.msg_count[&NYSEMsg::T003].separate_with_commas());
+    println!("Symbol Security Status Message {}", stats.msg_stats.msg_count[&NYSEMsg::T034].separate_with_commas());
+    println!("Trade Messages {}", stats.msg_stats.msg_count[&NYSEMsg::T220].separate_with_commas());
     println!("Trade Message details: Number of symbols {}", stats.trade_stats.get_symbol_count().separate_with_commas());
     println!("Trade Message details: Trade Volume {}", stats.trade_stats.get_total_volume().separate_with_commas());
     println!("Trade Message details: average_rate {}/second ", stats.trade_stats.get_average_rate().separate_with_commas());
@@ -100,12 +105,12 @@ fn process_line(line: String, stats: &mut Stats) -> Result<(), Box<dyn Error>> {
     stats.msg_stats.add(msg_type);
 
     match msg_type {
-        NYSEMsg::T003 | NYSEMsg::T034=> {
+        NYSEMsg::T003 | NYSEMsg::T034 => {
             Ok(())
         }
 
         NYSEMsg::T220 => {
-             match T220::new(toks){
+            match T220::new(toks) {
                 Ok(trade) => {
                     stats.trade_stats.add(&trade)
                 }
@@ -113,8 +118,6 @@ fn process_line(line: String, stats: &mut Stats) -> Result<(), Box<dyn Error>> {
                     Err(e)
                 }
             }
-
-
         }
         NYSEMsg::ERROR => {
             Err("Unknown message type".into())

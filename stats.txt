@@ -1,0 +1,22 @@
+Processing file EQY_US_TAQ_NYSE_TRADES_20230103
+Processed 4,885,908 records in 6 seconds
+Symbol Index Mapping Messages 11,824
+Symbol Security Status Message 62,082
+Trade Messages 4,812,002
+Trade Message details: Number of symbols 7,498
+Trade Message details: Trade Volume 2,286,555,385
+Trade Message details: average_rate 185.548/second 
+
+
+-----------------------------------
+
+
+Processing file EQY_US_TAQ_NYSE_TRADES_20230404
+Processed 4,459,820 records in 5 seconds
+Symbol Index Mapping Messages 11,588
+Symbol Security Status Message 60,740
+Trade Messages 4,387,492
+Trade Message details: Number of symbols 7,153
+Trade Message details: Trade Volume 2,321,186,061
+Trade Message details: average_rate 172.47787/second 
+

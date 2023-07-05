@@ -112,7 +112,7 @@ impl TradeStats {
         self.symbols.len() as i32
     }
 
-    pub fn get_volume_per_symbol(&self, symbol: &str) -> i32 {
+    pub fn get_count_per_symbol(&self, symbol: &str) -> i32 {
         match self.total_volume.get(symbol) {
             Some(count) => *count,
             None => 0,
@@ -261,8 +261,8 @@ mod test {
         stats.add(&T220::new(trade_vec).unwrap()).unwrap();
         assert_eq!(stats.get_symbol_count(), 3);
 
-        assert_eq!(stats.get_volume_per_symbol("IBM"), 1000);
-        assert_eq!(stats.get_volume_per_symbol("MSFT"), 2500);
+        assert_eq!(stats.get_count_per_symbol("IBM"), 1000);
+        assert_eq!(stats.get_count_per_symbol("MSFT"), 2500);
         assert_eq!(stats.get_total_volume(), 4500);
         assert_eq!(stats.get_average_rate().round(), 4.0);
 
