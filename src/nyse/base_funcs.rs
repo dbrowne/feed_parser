@@ -57,7 +57,7 @@ pub fn get_msg_type(msg: &str) -> NYSEMsg {
 
 #[derive(Debug)]
 pub struct MsgStats {
-    msg_count: HashMap<NYSEMsg, i32>,
+    pub msg_count: HashMap<NYSEMsg, i32>,
 
 }
 
