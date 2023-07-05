@@ -13,5 +13,5 @@
 
 mod mt34;
 mod mt3;
-mod mt220;
+pub  mod mt220;
 pub mod base_funcs;

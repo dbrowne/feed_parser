@@ -37,7 +37,7 @@ use std::error::Error;
 use crate::nyse::mt220::T220;
 use crate::time_funcs::time_to_dec;
 
-#[derive(Eq, Hash, PartialEq, Debug)]
+#[derive(Eq, Hash, PartialEq, Debug,Copy, Clone)]
 pub enum NYSEMsg {
     T003,
     T034,

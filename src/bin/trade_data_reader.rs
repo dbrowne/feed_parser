@@ -31,11 +31,13 @@
 
 use dotenvy::dotenv;
 use std::{env, io};
+use std::error::Error;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::process::exit;
-use feed_parser::nyse::base_funcs::{NYSEMsg, get_msg_type, MsgStats, TradeStats};
+use feed_parser::nyse::mt220::T220;
+use feed_parser::nyse::base_funcs::{NYSEMsg, get_msg_type, Stats};
 
 fn main() {
     dotenv().ok();
@@ -54,19 +56,33 @@ fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
 
 fn process_file(data_file: String) {
     println!("Processing file {}", data_file);
-    let mut stats = TradeStats::new();
+    let mut stats = Stats::new();
+    let  mut ctr = 0;
     if let Ok(lines) = read_lines(data_file) {
         for line in lines {
             if let Ok(ip) = line {
+                ctr += 1;
                 let msg_type = process_line(ip, &mut stats);
+                match  msg_type{
+                    Ok(()) => {ctr += 1;},
+                    Err(e) => {
+                        println!("error processing line :{}",ctr);
+                        println!("error: {}", e);
+                        exit(1);
+                    }
+                }
             }
         }
-        println!("messages: {:?}", messages);
     }
+
+
+    println!("Processed {} lines", ctr);
+    println!("Message Stats: {:?}", stats.msg_stats);
+    println!("T220 Stats: {:?}", stats.trade_stats);
 }
 
 
-fn process_line(line: String, stats: &mut TradeStats) {
+fn process_line(line: String, stats: &mut Stats) -> Result<(), Box<dyn Error>> {
     //todo!(Need some error handling here)
     let toks: Vec<String> = line.split(',')
         .map(|s| s.to_string())
@@ -74,26 +90,28 @@ fn process_line(line: String, stats: &mut TradeStats) {
 
     let msg_type = get_msg_type(&toks[0]);
 
-    stats::msg_stats.add_msg(msg_type);
+    stats.msg_stats.add(msg_type);
 
     match msg_type {
-        (NYSEMsg::T003 | NYSEMsg::T034)=> {
-
+        NYSEMsg::T003 | NYSEMsg::T034=> {
+            Ok(())
         }
 
         NYSEMsg::T220 => {
-            stats.t220_stats.process_t220(&toks);
+             match T220::new(toks){
+                Ok(trade) => {
+                    stats.trade_stats.add(&trade)
+                }
+                Err(e) => {
+                    Err(e)
+                }
+            }
+
+
         }
         NYSEMsg::ERROR => {
-            println!("Error: {}", line);
-            exit(1);
+            Err("Unknown message type".into())
         }
     }
 }
 
-fn process_trades(inp: Vec<String>) {
-    println!("Processing trades");
-    for line in inp {
-        println!("line: {}", line);
-    }
-}

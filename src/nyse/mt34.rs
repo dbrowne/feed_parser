@@ -381,7 +381,7 @@ mod test {
     }
 
     #[test]
-    fn t_narket_state_nap() {
+    fn t_NarketStateNap() {
         let map = super::MarketStateMap::new();
         assert_eq!(map.get('P'), Some(&super::MarketState::PreOp));
         assert_eq!(map.get('E'), Some(&super::MarketState::EarlySess));
