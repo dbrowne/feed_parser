@@ -33,21 +33,21 @@
 // Based on  https://www.nyse.com/publicdocs/nyse/data/TAQ_Pillar_Products_Client_Spec_v2.3i.pdf
 // Symbol Index Mapping Message (Type 3)
 
-use std::collections::HashMap;
+
 
 pub struct T3 {
     //symbol Index Mapping Message
     pub msg_type: u8,
     pub seq_num: i32,
     pub symbol: String,
-    pub market_id: i32,
+    pub market_id: String,
     pub system_id: i32,
     pub exchange_code: String,
     pub security_type: String,
     pub lot_size: i32,
     pub prev_close_price: f32,
     pub prev_close_volume: i32,
-    pub price_resolution: i32,
+    pub price_resolution: String,
     pub round_lot: String,
     pub mpv: f32,
     pub unit_of_trade: i32,
@@ -64,29 +64,21 @@ pub enum MarketID {
     NYSEAmerEq,
     NYSENatEq,
     NYSEChiEq,
+    ERROR,
 }
 
 
-pub struct MarketIDMap {
-    map: HashMap<i8, MarketID>,
-}
-
-impl MarketIDMap {
-    pub fn new() -> Self {
-        let mut map = HashMap::new();
-        map.insert(1, MarketID::NYSE);
-        map.insert(3, MarketID::NYSEArcaEq);
-        map.insert(4, MarketID::NYSEArcaOpt);
-        map.insert(5, MarketID::NYSEBonds);
-        map.insert(8, MarketID::NYSEAmexOpt);
-        map.insert(9, MarketID::NYSEAmerEq);
-        map.insert(10, MarketID::NYSENatEq);
-        map.insert(11, MarketID::NYSEChiEq);
-        Self { map }
-    }
-
-    pub fn get(&self, key: i8) -> Option<&MarketID> {
-        self.map.get(&key)
+pub fn get_market_id(id: &str) -> MarketID {
+    match id {
+        "1" => MarketID::NYSE,
+        "3" => MarketID::NYSEArcaEq,
+        "4" => MarketID::NYSEArcaOpt,
+        "5" => MarketID::NYSEBonds,
+        "8" => MarketID::NYSEAmexOpt,
+        "9" => MarketID::NYSEAmerEq,
+        "10" => MarketID::NYSENatEq,
+        "11" => MarketID::NYSEChiEq,
+        _ => MarketID::ERROR,
     }
 }
 
@@ -109,114 +101,98 @@ pub enum SecuryType {
     CEF,
     IdxSec,
     War,
+    ERROR,
 }
 
-pub struct SecurityTypeMap {
-    map: HashMap<char, SecuryType>,
-}
 
-impl SecurityTypeMap {
-    pub fn new() -> Self {
-        let mut map = HashMap::new();
-        map.insert('A', SecuryType::ADR);
-        map.insert('C', SecuryType::ComStk);
-        map.insert('D', SecuryType::Deben);
-        map.insert('E', SecuryType::ETF);
-        map.insert('F', SecuryType::Foreign);
-        map.insert('H', SecuryType::ADShares);
-        map.insert('I', SecuryType::Units);
-        map.insert('L', SecuryType::IdxLnkdNotes);
-        map.insert('M', SecuryType::OtherBlank);
-        map.insert('O', SecuryType::OrdShrs);
-        map.insert('P', SecuryType::Pfd);
-        map.insert('R', SecuryType::Rights);
-        map.insert('S', SecuryType::SoBenInt);
-        map.insert('T', SecuryType::Test);
-        map.insert('U', SecuryType::CEF);
-        map.insert('X', SecuryType::IdxSec);
-        map.insert('Y', SecuryType::War);
-        Self { map }
-    }
-
-    pub fn get(&self, key: char) -> Option<&SecuryType> {
-        self.map.get(&key)
+pub fn get_security_type(id: &str) -> SecuryType {
+    match id {
+        "A" => SecuryType::ADR,
+        "C" => SecuryType::ComStk,
+        "D" => SecuryType::Deben,
+        "E" => SecuryType::ETF,
+        "F" => SecuryType::Foreign,
+        "H" => SecuryType::ADShares,
+        "I" => SecuryType::Units,
+        "L" => SecuryType::IdxLnkdNotes,
+        "M" => SecuryType::OtherBlank,
+        "O" => SecuryType::OrdShrs,
+        "P" => SecuryType::Pfd,
+        "R" => SecuryType::Rights,
+        "S" => SecuryType::SoBenInt,
+        "T" => SecuryType::Test,
+        "U" => SecuryType::CEF,
+        "X" => SecuryType::IdxSec,
+        "Y" => SecuryType::War,
+        _ => SecuryType::ERROR
     }
 }
+
 
 #[derive(PartialEq, Debug)]
-pub  enum PriceResolution {
-        AllPenny,
-        PennyNickel,
-        NickelDime,
+pub enum PriceResolution {
+    AllPenny,
+    PennyNickel,
+    NickelDime,
+    ERROR,
 }
 
-pub struct PriceResolutionMap {
-    map: HashMap<i8, PriceResolution>,
-}
-
-impl PriceResolutionMap {
-    pub fn new() -> Self {
-        let mut map = HashMap::new();
-        map.insert(0, PriceResolution::AllPenny);
-        map.insert(1, PriceResolution::PennyNickel);
-        map.insert(5, PriceResolution::NickelDime);
-        Self { map }
-    }
-
-    pub fn get(&self, key: i8) -> Option<&PriceResolution> {
-        self.map.get(&key)
+pub fn get_price_resolution(id: &str) -> PriceResolution {
+    match id {
+        "0" => PriceResolution::AllPenny,
+        "1" => PriceResolution::PennyNickel,
+        "5" => PriceResolution::NickelDime,
+        _ => PriceResolution::ERROR,
     }
 }
-
-
 
 
 #[cfg(test)]
-mod  test{
+mod test {
     #[test]
-    fn test_market_idmap() {
+    fn test_market_id() {
         use super::*;
-        let market_id_map = MarketIDMap::new();
-        assert_eq!(market_id_map.get(1), Some(&MarketID::NYSE));
-        assert_eq!(market_id_map.get(3), Some(&MarketID::NYSEArcaEq));
-        assert_eq!(market_id_map.get(4), Some(&MarketID::NYSEArcaOpt));
-        assert_eq!(market_id_map.get(5), Some(&MarketID::NYSEBonds));
-        assert_eq!(market_id_map.get(8), Some(&MarketID::NYSEAmexOpt));
-        assert_eq!(market_id_map.get(9), Some(&MarketID::NYSEAmerEq));
-        assert_eq!(market_id_map.get(10), Some(&MarketID::NYSENatEq));
-        assert_eq!(market_id_map.get(11), Some(&MarketID::NYSEChiEq));
+        assert_eq!(get_market_id("1"), MarketID::NYSE);
+        assert_eq!(get_market_id("3"), MarketID::NYSEArcaEq);
+        assert_eq!(get_market_id("4"), MarketID::NYSEArcaOpt);
+        assert_eq!(get_market_id("5"), MarketID::NYSEBonds);
+        assert_eq!(get_market_id("8"), MarketID::NYSEAmexOpt);
+        assert_eq!(get_market_id("9"), MarketID::NYSEAmerEq);
+        assert_eq!(get_market_id("10"), MarketID::NYSENatEq);
+        assert_eq!(get_market_id("11"), MarketID::NYSEChiEq);
+        assert_eq!(get_market_id("12"), MarketID::ERROR);
     }
 
 
     #[test]
-    fn test_security_type_map() {
+    fn test_security_type() {
         use super::*;
-        let security_type_map = SecurityTypeMap::new();
-        assert_eq!(security_type_map.get('A'), Some(&SecuryType::ADR));
-        assert_eq!(security_type_map.get('C'), Some(&SecuryType::ComStk));
-        assert_eq!(security_type_map.get('D'), Some(&SecuryType::Deben));
-        assert_eq!(security_type_map.get('E'), Some(&SecuryType::ETF));
-        assert_eq!(security_type_map.get('F'), Some(&SecuryType::Foreign));
-        assert_eq!(security_type_map.get('H'), Some(&SecuryType::ADShares));
-        assert_eq!(security_type_map.get('I'), Some(&SecuryType::Units));
-        assert_eq!(security_type_map.get('L'), Some(&SecuryType::IdxLnkdNotes));
-        assert_eq!(security_type_map.get('M'), Some(&SecuryType::OtherBlank));
-        assert_eq!(security_type_map.get('O'), Some(&SecuryType::OrdShrs));
-        assert_eq!(security_type_map.get('P'), Some(&SecuryType::Pfd));
-        assert_eq!(security_type_map.get('R'), Some(&SecuryType::Rights));
-        assert_eq!(security_type_map.get('S'), Some(&SecuryType::SoBenInt));
-        assert_eq!(security_type_map.get('T'), Some(&SecuryType::Test));
-        assert_eq!(security_type_map.get('U'), Some(&SecuryType::CEF));
-        assert_eq!(security_type_map.get('X'), Some(&SecuryType::IdxSec));
-        assert_eq!(security_type_map.get('Y'), Some(&SecuryType::War));
-    }
-    #[test]
-    fn test_price_resolution_map() {
-        use super::*;
-        let price_resolution_map = PriceResolutionMap::new();
-        assert_eq!(price_resolution_map.get(0), Some(&PriceResolution::AllPenny));
-        assert_eq!(price_resolution_map.get(1), Some(&PriceResolution::PennyNickel));
-        assert_eq!(price_resolution_map.get(5), Some(&PriceResolution::NickelDime));
+        assert_eq!(get_security_type("A"), SecuryType::ADR);
+        assert_eq!(get_security_type("C"), SecuryType::ComStk);
+        assert_eq!(get_security_type("D"), SecuryType::Deben);
+        assert_eq!(get_security_type("E"), SecuryType::ETF);
+        assert_eq!(get_security_type("F"), SecuryType::Foreign);
+        assert_eq!(get_security_type("H"), SecuryType::ADShares);
+        assert_eq!(get_security_type("I"), SecuryType::Units);
+        assert_eq!(get_security_type("L"), SecuryType::IdxLnkdNotes);
+        assert_eq!(get_security_type("M"), SecuryType::OtherBlank);
+        assert_eq!(get_security_type("O"), SecuryType::OrdShrs);
+        assert_eq!(get_security_type("P"), SecuryType::Pfd);
+        assert_eq!(get_security_type("R"), SecuryType::Rights);
+        assert_eq!(get_security_type("S"), SecuryType::SoBenInt);
+        assert_eq!(get_security_type("T"), SecuryType::Test);
+        assert_eq!(get_security_type("U"), SecuryType::CEF);
+        assert_eq!(get_security_type("X"), SecuryType::IdxSec);
+        assert_eq!(get_security_type("Y"), SecuryType::War);
+        assert_eq!(get_security_type("Z"), SecuryType::ERROR);
     }
 
+    #[test]
+    fn test_price_resolution() {
+        use super::*;
+        assert_eq!(get_price_resolution("0"), PriceResolution::AllPenny);
+        assert_eq!(get_price_resolution("1"), PriceResolution::PennyNickel);
+        assert_eq!(get_price_resolution("5"), PriceResolution::NickelDime);
+        assert_eq!(get_price_resolution("6"), PriceResolution::ERROR);
+    }
 }

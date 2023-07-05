@@ -78,41 +78,35 @@ pub enum SSRTexID {
     NASDAQOMXPSX,
     CBOEBYX,
     CBOEBZX,
+    ERROR
 }
 
-pub struct SSRTExIDMap {
-    map: HashMap<char, SSRTexID>,
-}
-
-impl SSRTExIDMap {
-    pub fn new() -> Self {
-        let mut map = HashMap::new();
-        map.insert('N', SSRTexID::NYSE);
-        map.insert('P', SSRTexID::NYSEArca);
-        map.insert('C', SSRTexID::NYSENational); // This is a conflict with 'C' - NSX
-        map.insert('Q', SSRTexID::NASDAQ);
-        map.insert('A', SSRTexID::NYSEAmerican);
-        map.insert('B', SSRTexID::NASDAQOMXBX);
-        map.insert('D', SSRTexID::FINRA);
-        map.insert('I', SSRTexID::ISE);
-        map.insert('J', SSRTexID::EDGA);
-        map.insert('K', SSRTexID::EDGX);
-        map.insert('L', SSRTexID::LTSE);
-        map.insert('M', SSRTexID::NYSEChicago);
-        map.insert('S', SSRTexID::CTS);
-        map.insert('T', SSRTexID::NASDAQOMX);
-        map.insert('V', SSRTexID::IEX);
-        map.insert('W', SSRTexID::CBSX);
-        map.insert('X', SSRTexID::NASDAQOMXPSX);
-        map.insert('Y', SSRTexID::CBOEBYX);
-        map.insert('Z', SSRTexID::CBOEBZX);
-        Self { map }
-    }
-
-    pub fn get(&self, key: char) -> Option<&SSRTexID> {
-        self.map.get(&key)
+pub  fn  get_ssre_tex_id(id :&str) -> SSRTexID {
+    match   id{
+        "N" => SSRTexID::NYSE,
+        "P" => SSRTexID::NYSEArca,
+        "C" => SSRTexID::NYSENational,
+        "Q" => SSRTexID::NASDAQ,
+        "A" => SSRTexID::NYSEAmerican,
+        "B" => SSRTexID::NASDAQOMXBX,
+        "D" => SSRTexID::FINRA,
+        "I" => SSRTexID::ISE,
+        "J" => SSRTexID::EDGA,
+        "K" => SSRTexID::EDGX,
+        "L" => SSRTexID::LTSE,
+        "M" => SSRTexID::NYSEChicago,
+        "S" => SSRTexID::CTS,
+        "T" => SSRTexID::NASDAQOMX,
+        "V" => SSRTexID::IEX,
+        "W" => SSRTexID::CBSX,
+        "X" => SSRTexID::NASDAQOMXPSX,
+        "Y" => SSRTexID::CBOEBYX,
+        "Z" => SSRTexID::CBOEBZX,
+        _ => SSRTexID::ERROR,
     }
 }
+
+
 
 #[derive(PartialEq, Debug)]
 pub enum SecurityStatus {
@@ -304,29 +298,30 @@ impl MarketStateMap {
 
 #[cfg(test)]
 mod test {
+    use super::*;
+
     #[test]
-    fn t_ssrtex_idmap() {
-        let map = super::SSRTExIDMap::new();
-        assert_eq!(map.get('N'), Some(&super::SSRTexID::NYSE));
-        assert_eq!(map.get('P'), Some(&super::SSRTexID::NYSEArca));
-        assert_eq!(map.get('C'), Some(&super::SSRTexID::NYSENational));
-        assert_eq!(map.get('Q'), Some(&super::SSRTexID::NASDAQ));
-        assert_eq!(map.get('A'), Some(&super::SSRTexID::NYSEAmerican));
-        assert_eq!(map.get('B'), Some(&super::SSRTexID::NASDAQOMXBX));
-        assert_eq!(map.get('D'), Some(&super::SSRTexID::FINRA));
-        assert_eq!(map.get('I'), Some(&super::SSRTexID::ISE));
-        assert_eq!(map.get('J'), Some(&super::SSRTexID::EDGA));
-        assert_eq!(map.get('K'), Some(&super::SSRTexID::EDGX));
-        assert_eq!(map.get('L'), Some(&super::SSRTexID::LTSE));
-        assert_eq!(map.get('M'), Some(&super::SSRTexID::NYSEChicago));
-        assert_eq!(map.get('S'), Some(&super::SSRTexID::CTS));
-        assert_eq!(map.get('T'), Some(&super::SSRTexID::NASDAQOMX));
-        assert_eq!(map.get('V'), Some(&super::SSRTexID::IEX));
-        assert_eq!(map.get('W'), Some(&super::SSRTexID::CBSX));
-        assert_eq!(map.get('X'), Some(&super::SSRTexID::NASDAQOMXPSX));
-        assert_eq!(map.get('Y'), Some(&super::SSRTexID::CBOEBYX));
-        assert_eq!(map.get('Z'), Some(&super::SSRTexID::CBOEBZX));
-        assert_eq!(map.get('F'), None);
+    fn test_get_ssre_tex_id() {
+        assert_eq!(get_ssre_tex_id("N"), SSRTexID::NYSE);
+        assert_eq!(get_ssre_tex_id("P"), SSRTexID::NYSEArca);
+        assert_eq!(get_ssre_tex_id("C"), SSRTexID::NYSENational);
+        assert_eq!(get_ssre_tex_id("Q"), SSRTexID::NASDAQ);
+        assert_eq!(get_ssre_tex_id("A"), SSRTexID::NYSEAmerican);
+        assert_eq!(get_ssre_tex_id("B"), SSRTexID::NASDAQOMXBX);
+        assert_eq!(get_ssre_tex_id("D"), SSRTexID::FINRA);
+        assert_eq!(get_ssre_tex_id("I"), SSRTexID::ISE);
+        assert_eq!(get_ssre_tex_id("J"), SSRTexID::EDGA);
+        assert_eq!(get_ssre_tex_id("K"), SSRTexID::EDGX);
+        assert_eq!(get_ssre_tex_id("L"), SSRTexID::LTSE);
+        assert_eq!(get_ssre_tex_id("M"), SSRTexID::NYSEChicago);
+        assert_eq!(get_ssre_tex_id("S"), SSRTexID::CTS);
+        assert_eq!(get_ssre_tex_id("T"), SSRTexID::NASDAQOMX);
+        assert_eq!(get_ssre_tex_id("V"), SSRTexID::IEX);
+        assert_eq!(get_ssre_tex_id("W"), SSRTexID::CBSX);
+        assert_eq!(get_ssre_tex_id("X"), SSRTexID::NASDAQOMXPSX);
+        assert_eq!(get_ssre_tex_id("Y"), SSRTexID::CBOEBYX);
+        assert_eq!(get_ssre_tex_id("Z"), SSRTexID::CBOEBZX);
+        assert_eq!(get_ssre_tex_id("F"), SSRTexID::ERROR);
     }
 
     #[test]
@@ -381,10 +376,11 @@ mod test {
     }
 
     #[test]
-    fn t_NarketStateNap() {
+    fn t_Market_state_nap() {
         let map = super::MarketStateMap::new();
         assert_eq!(map.get('P'), Some(&super::MarketState::PreOp));
         assert_eq!(map.get('E'), Some(&super::MarketState::EarlySess));
+
         assert_eq!(map.get('O'), Some(&super::MarketState::CoreSEss));
         assert_eq!(map.get('L'), Some(&super::MarketState::LateSess));
         assert_eq!(map.get('X'), Some(&super::MarketState::Closed));
