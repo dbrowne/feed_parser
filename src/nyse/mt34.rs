@@ -34,8 +34,6 @@
 // Based on https://www.nyse.com/publicdocs/nyse/data/TAQ_Pillar_Products_Client_Spec_v2.3i.pdf
 
 
-use std::collections::HashMap;
-
 
 pub struct T34 {
     // Security Status Message
@@ -81,30 +79,33 @@ pub enum SSRTexID {
     ERROR
 }
 
-pub  fn  get_ssre_tex_id(id :&str) -> SSRTexID {
-    match   id{
-        "N" => SSRTexID::NYSE,
-        "P" => SSRTexID::NYSEArca,
-        "C" => SSRTexID::NYSENational,
-        "Q" => SSRTexID::NASDAQ,
-        "A" => SSRTexID::NYSEAmerican,
-        "B" => SSRTexID::NASDAQOMXBX,
-        "D" => SSRTexID::FINRA,
-        "I" => SSRTexID::ISE,
-        "J" => SSRTexID::EDGA,
-        "K" => SSRTexID::EDGX,
-        "L" => SSRTexID::LTSE,
-        "M" => SSRTexID::NYSEChicago,
-        "S" => SSRTexID::CTS,
-        "T" => SSRTexID::NASDAQOMX,
-        "V" => SSRTexID::IEX,
-        "W" => SSRTexID::CBSX,
-        "X" => SSRTexID::NASDAQOMXPSX,
-        "Y" => SSRTexID::CBOEBYX,
-        "Z" => SSRTexID::CBOEBZX,
-        _ => SSRTexID::ERROR,
+impl SSRTexID {
+    pub  fn  get(id :&str) -> SSRTexID {
+        match   id{
+            "N" => SSRTexID::NYSE,
+            "P" => SSRTexID::NYSEArca,
+            "C" => SSRTexID::NYSENational,
+            "Q" => SSRTexID::NASDAQ,
+            "A" => SSRTexID::NYSEAmerican,
+            "B" => SSRTexID::NASDAQOMXBX,
+            "D" => SSRTexID::FINRA,
+            "I" => SSRTexID::ISE,
+            "J" => SSRTexID::EDGA,
+            "K" => SSRTexID::EDGX,
+            "L" => SSRTexID::LTSE,
+            "M" => SSRTexID::NYSEChicago,
+            "S" => SSRTexID::CTS,
+            "T" => SSRTexID::NASDAQOMX,
+            "V" => SSRTexID::IEX,
+            "W" => SSRTexID::CBSX,
+            "X" => SSRTexID::NASDAQOMXPSX,
+            "Y" => SSRTexID::CBOEBYX,
+            "Z" => SSRTexID::CBOEBZX,
+            _ => SSRTexID::ERROR,
+        }
     }
 }
+
 
 
 
@@ -135,35 +136,32 @@ pub enum SecurityStatus {
     PI,
     // • G – Pre-Opening Price Indication
     PreOPI,
+    ERROR,
 }
 
-pub struct SecurityStatusMap {
-    map: HashMap<char, SecurityStatus>,
-}
+impl SecurityStatus {
+    pub fn  get(id:&str) -> SecurityStatus {
+        match  id {
+            "4" => SecurityStatus::Halt,
+            "5" => SecurityStatus::Resume,
+            "A" => SecurityStatus::SSRA,
+            "C" => SecurityStatus::SSRC,
+            "D" => SecurityStatus::SSRD,
+            "P" => SecurityStatus::PreO,
+            "B" => SecurityStatus::Beg,
+            "E" => SecurityStatus::Early,
+            "O" => SecurityStatus::Core,
+            "L" => SecurityStatus::Late,
+            "X" => SecurityStatus::Closed,
+            "I" => SecurityStatus::PI,
+            "G" => SecurityStatus::PreOPI,
+            _ => SecurityStatus::ERROR,
+        }
 
-impl SecurityStatusMap {
-    pub fn new() -> Self {
-        let mut map = HashMap::new();
-        map.insert('4', SecurityStatus::Halt);
-        map.insert('5', SecurityStatus::Resume);
-        map.insert('A', SecurityStatus::SSRA);
-        map.insert('C', SecurityStatus::SSRC);
-        map.insert('D', SecurityStatus::SSRD);
-        map.insert('P', SecurityStatus::PreO);
-        map.insert('B', SecurityStatus::Beg);
-        map.insert('E', SecurityStatus::Early);
-        map.insert('O', SecurityStatus::Core);
-        map.insert('L', SecurityStatus::Late);
-        map.insert('X', SecurityStatus::Closed);
-        map.insert('I', SecurityStatus::PI);
-        map.insert('G', SecurityStatus::PreOPI);
-        Self { map }
-    }
-
-    pub fn get(&self, key: char) -> Option<&SecurityStatus> {
-        self.map.get(&key)
     }
 }
+
+
 
 #[derive(PartialEq, Debug)]
 pub enum HaltCondition {
@@ -201,39 +199,35 @@ pub enum HaltCondition {
     HaltL2,
     // • '3' - Market Wide Circuit Breaker Halt Level 3
     HaltL3,
+    ERROR,
 }
 
-pub struct HaltConditionMap {
-    map: HashMap<char, HaltCondition>,
-}
-
-impl HaltConditionMap {
-    pub fn new() -> Self {
-        let mut map = HashMap::new();
-        map.insert('~', HaltCondition::NotDelayed);
-        map.insert('D', HaltCondition::NewsRel);
-        map.insert('I', HaltCondition::OrdImb);
-        map.insert('P', HaltCondition::NewsPend);
-        map.insert('M', HaltCondition::LULDPause);
-        map.insert('X', HaltCondition::EquipChange);
-        map.insert('Z', HaltCondition::NOOpNoRes);
-        map.insert('A', HaltCondition::AddlInfReq);
-        map.insert('C', HaltCondition::RegCon);
-        map.insert('E', HaltCondition::MergE);
-        map.insert('F', HaltCondition::ETFMisPr);
-        map.insert('N', HaltCondition::CorpA);
-        map.insert('O', HaltCondition::NewOff);
-        map.insert('V', HaltCondition::NoIntraDay);
-        map.insert('1', HaltCondition::HaltL1);
-        map.insert('2', HaltCondition::HaltL2);
-        map.insert('3', HaltCondition::HaltL3);
-        Self { map }
-    }
-
-    pub fn get(&self, key: char) -> Option<&HaltCondition> {
-        self.map.get(&key)
+impl HaltCondition {
+    pub  fn  get(id: &str) ->HaltCondition{
+        match  id {
+            "~" => HaltCondition::NotDelayed,
+            "D" => HaltCondition::NewsRel,
+            "I" => HaltCondition::OrdImb,
+            "P" => HaltCondition::NewsPend,
+            "M" => HaltCondition::LULDPause,
+            "X" => HaltCondition::EquipChange,
+            "Z" => HaltCondition::NOOpNoRes,
+            "A" => HaltCondition::AddlInfReq,
+            "C" => HaltCondition::RegCon,
+            "E" => HaltCondition::MergE,
+            "F" => HaltCondition::ETFMisPr,
+            "N" => HaltCondition::CorpA,
+            "O" => HaltCondition::NewOff,
+            "V" => HaltCondition::NoIntraDay,
+            "1" => HaltCondition::HaltL1,
+            "2" => HaltCondition::HaltL2,
+            "3" => HaltCondition::HaltL3,
+            _ => HaltCondition::ERROR,
+        }
     }
 }
+
+
 
 #[derive(PartialEq, Debug)]
 pub  enum SSRState {
@@ -241,24 +235,21 @@ pub  enum SSRState {
     NoSSR,
     // • ‘E’ – Short Sale Restriction in Effect
     SSR,
+    ERROR,
 }
 
-pub struct SSRStateMap {
-    map: HashMap<char, SSRState>,
-}
-
-impl SSRStateMap {
-    pub fn new() -> Self {
-        let mut map = HashMap::new();
-        map.insert('~', SSRState::NoSSR);
-        map.insert('E', SSRState::SSR);
-        Self { map }
+impl SSRState {
+    pub fn get(id: &str) -> SSRState {
+        match id {
+            "~" => SSRState::NoSSR,
+            "E" => SSRState::SSR,
+            _ => SSRState::ERROR,
+        }
     }
-
-    pub fn get(&self, key: char) -> Option<&SSRState> {
-        self.map.get(&key)
-    }
+    
 }
+
+
 
 #[derive(PartialEq, Debug)]
 pub enum MarketState {
@@ -272,28 +263,23 @@ pub enum MarketState {
     LateSess,
     // • ‘X’ – Closed
     Closed,
+    ERROR,
 }
 
-
-pub struct MarketStateMap {
-    map: HashMap<char, MarketState>,
-}
-
-impl MarketStateMap {
-    pub fn new() -> Self {
-        let mut map = HashMap::new();
-        map.insert('P', MarketState::PreOp);
-        map.insert('E', MarketState::EarlySess);
-        map.insert('O', MarketState::CoreSEss);
-        map.insert('L', MarketState::LateSess);
-        map.insert('X', MarketState::Closed);
-        Self { map }
+impl MarketState {
+    pub  fn get(id: &str) ->MarketState{
+        match id {
+            "P" => MarketState::PreOp,
+            "E" => MarketState::EarlySess,
+            "O" => MarketState::CoreSEss,
+            "L" => MarketState::LateSess,
+            "X" => MarketState::Closed,
+            _ => MarketState::ERROR,
+        }
     }
-
-    pub fn get(&self, key: char) -> Option<&MarketState> {
-        self.map.get(&key)
-    }
+    
 }
+
 
 
 #[cfg(test)]
@@ -301,90 +287,85 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_get_ssre_tex_id() {
-        assert_eq!(get_ssre_tex_id("N"), SSRTexID::NYSE);
-        assert_eq!(get_ssre_tex_id("P"), SSRTexID::NYSEArca);
-        assert_eq!(get_ssre_tex_id("C"), SSRTexID::NYSENational);
-        assert_eq!(get_ssre_tex_id("Q"), SSRTexID::NASDAQ);
-        assert_eq!(get_ssre_tex_id("A"), SSRTexID::NYSEAmerican);
-        assert_eq!(get_ssre_tex_id("B"), SSRTexID::NASDAQOMXBX);
-        assert_eq!(get_ssre_tex_id("D"), SSRTexID::FINRA);
-        assert_eq!(get_ssre_tex_id("I"), SSRTexID::ISE);
-        assert_eq!(get_ssre_tex_id("J"), SSRTexID::EDGA);
-        assert_eq!(get_ssre_tex_id("K"), SSRTexID::EDGX);
-        assert_eq!(get_ssre_tex_id("L"), SSRTexID::LTSE);
-        assert_eq!(get_ssre_tex_id("M"), SSRTexID::NYSEChicago);
-        assert_eq!(get_ssre_tex_id("S"), SSRTexID::CTS);
-        assert_eq!(get_ssre_tex_id("T"), SSRTexID::NASDAQOMX);
-        assert_eq!(get_ssre_tex_id("V"), SSRTexID::IEX);
-        assert_eq!(get_ssre_tex_id("W"), SSRTexID::CBSX);
-        assert_eq!(get_ssre_tex_id("X"), SSRTexID::NASDAQOMXPSX);
-        assert_eq!(get_ssre_tex_id("Y"), SSRTexID::CBOEBYX);
-        assert_eq!(get_ssre_tex_id("Z"), SSRTexID::CBOEBZX);
-        assert_eq!(get_ssre_tex_id("F"), SSRTexID::ERROR);
+    fn test_ssrtexid() {
+        assert_eq!(SSRTexID::get("N"), SSRTexID::NYSE);
+        assert_eq!(SSRTexID::get("P"), SSRTexID::NYSEArca);
+        assert_eq!(SSRTexID::get("C"), SSRTexID::NYSENational);
+        assert_eq!(SSRTexID::get("Q"), SSRTexID::NASDAQ);
+        assert_eq!(SSRTexID::get("A"), SSRTexID::NYSEAmerican);
+        assert_eq!(SSRTexID::get("B"), SSRTexID::NASDAQOMXBX);
+        assert_eq!(SSRTexID::get("D"), SSRTexID::FINRA);
+        assert_eq!(SSRTexID::get("I"), SSRTexID::ISE);
+        assert_eq!(SSRTexID::get("J"), SSRTexID::EDGA);
+        assert_eq!(SSRTexID::get("K"), SSRTexID::EDGX);
+        assert_eq!(SSRTexID::get("L"), SSRTexID::LTSE);
+        assert_eq!(SSRTexID::get("M"), SSRTexID::NYSEChicago);
+        assert_eq!(SSRTexID::get("S"), SSRTexID::CTS);
+        assert_eq!(SSRTexID::get("T"), SSRTexID::NASDAQOMX);
+        assert_eq!(SSRTexID::get("V"), SSRTexID::IEX);
+        assert_eq!(SSRTexID::get("W"), SSRTexID::CBSX);
+        assert_eq!(SSRTexID::get("X"), SSRTexID::NASDAQOMXPSX);
+        assert_eq!(SSRTexID::get("Y"), SSRTexID::CBOEBYX);
+        assert_eq!(SSRTexID::get("Z"), SSRTexID::CBOEBZX);
+        assert_eq!(SSRTexID::get("F"), SSRTexID::ERROR);
     }
 
     #[test]
-    fn t_security_status_map() {
-        let map = super::SecurityStatusMap::new();
-        assert_eq!(map.get('4'), Some(&super::SecurityStatus::Halt));
-        assert_eq!(map.get('5'), Some(&super::SecurityStatus::Resume));
-        assert_eq!(map.get('A'), Some(&super::SecurityStatus::SSRA));
-        assert_eq!(map.get('C'), Some(&super::SecurityStatus::SSRC));
-        assert_eq!(map.get('C'), Some(&super::SecurityStatus::SSRC));
-        assert_eq!(map.get('D'), Some(&super::SecurityStatus::SSRD));
-        assert_eq!(map.get('P'), Some(&super::SecurityStatus::PreO));
-        assert_eq!(map.get('B'), Some(&super::SecurityStatus::Beg));
-        assert_eq!(map.get('E'), Some(&super::SecurityStatus::Early));
-        assert_eq!(map.get('O'), Some(&super::SecurityStatus::Core));
-        assert_eq!(map.get('L'), Some(&super::SecurityStatus::Late));
-        assert_eq!(map.get('X'), Some(&super::SecurityStatus::Closed));
-        assert_eq!(map.get('I'), Some(&super::SecurityStatus::PI));
-        assert_eq!(map.get('G'), Some(&super::SecurityStatus::PreOPI));
-        assert_eq!(map.get('H'), None);
+    fn t_security_status() {
+        assert_eq!(SecurityStatus::get("4"), SecurityStatus::Halt);
+        assert_eq!(SecurityStatus::get("5"), SecurityStatus::Resume);
+        assert_eq!(SecurityStatus::get("A"), SecurityStatus::SSRA);
+        assert_eq!(SecurityStatus::get("C"), SecurityStatus::SSRC);
+        assert_eq!(SecurityStatus::get("C"), SecurityStatus::SSRC);
+        assert_eq!(SecurityStatus::get("D"), SecurityStatus::SSRD);
+        assert_eq!(SecurityStatus::get("P"), SecurityStatus::PreO);
+        assert_eq!(SecurityStatus::get("B"), SecurityStatus::Beg);
+        assert_eq!(SecurityStatus::get("E"), SecurityStatus::Early);
+        assert_eq!(SecurityStatus::get("O"), SecurityStatus::Core);
+        assert_eq!(SecurityStatus::get("L"), SecurityStatus::Late);
+        assert_eq!(SecurityStatus::get("X"), SecurityStatus::Closed);
+        assert_eq!(SecurityStatus::get("I"), SecurityStatus::PI);
+        assert_eq!(SecurityStatus::get("G"), SecurityStatus::PreOPI);
+        assert_eq!(SecurityStatus::get("H"), SecurityStatus::ERROR);
     }
 
     #[test]
-    fn t_halt_condidtion_map() {
-        let map = super::HaltConditionMap::new();
-        assert_eq!(map.get('~'), Some(&super::HaltCondition::NotDelayed));
-        assert_eq!(map.get('D'), Some(&super::HaltCondition::NewsRel));
-        assert_eq!(map.get('I'), Some(&super::HaltCondition::OrdImb));
-        assert_eq!(map.get('P'), Some(&super::HaltCondition::NewsPend));
-        assert_eq!(map.get('M'), Some(&super::HaltCondition::LULDPause));
-        assert_eq!(map.get('X'), Some(&super::HaltCondition::EquipChange));
-        assert_eq!(map.get('Z'), Some(&super::HaltCondition::NOOpNoRes));
-        assert_eq!(map.get('A'), Some(&super::HaltCondition::AddlInfReq));
-        assert_eq!(map.get('C'), Some(&super::HaltCondition::RegCon));
-        assert_eq!(map.get('E'), Some(&super::HaltCondition::MergE));
-        assert_eq!(map.get('F'), Some(&super::HaltCondition::ETFMisPr));
-        assert_eq!(map.get('N'), Some(&super::HaltCondition::CorpA));
-        assert_eq!(map.get('O'), Some(&super::HaltCondition::NewOff));
-        assert_eq!(map.get('V'), Some(&super::HaltCondition::NoIntraDay));
-        assert_eq!(map.get('1'), Some(&super::HaltCondition::HaltL1));
-        assert_eq!(map.get('2'), Some(&super::HaltCondition::HaltL2));
-        assert_eq!(map.get('3'), Some(&super::HaltCondition::HaltL3));
-        assert_eq!(map.get('$'), None);
+    fn t_halt_condition() {
+        assert_eq!(HaltCondition::get("~"), HaltCondition::NotDelayed);
+        assert_eq!(HaltCondition::get("D"), HaltCondition::NewsRel);
+        assert_eq!(HaltCondition::get("I"), HaltCondition::OrdImb);
+        assert_eq!(HaltCondition::get("P"), HaltCondition::NewsPend);
+        assert_eq!(HaltCondition::get("M"), HaltCondition::LULDPause);
+        assert_eq!(HaltCondition::get("X"), HaltCondition::EquipChange);
+        assert_eq!(HaltCondition::get("Z"), HaltCondition::NOOpNoRes);
+        assert_eq!(HaltCondition::get("A"), HaltCondition::AddlInfReq);
+        assert_eq!(HaltCondition::get("C"), HaltCondition::RegCon);
+        assert_eq!(HaltCondition::get("E"), HaltCondition::MergE);
+        assert_eq!(HaltCondition::get("F"), HaltCondition::ETFMisPr);
+        assert_eq!(HaltCondition::get("N"), HaltCondition::CorpA);
+        assert_eq!(HaltCondition::get("O"), HaltCondition::NewOff);
+        assert_eq!(HaltCondition::get("V"), HaltCondition::NoIntraDay);
+        assert_eq!(HaltCondition::get("1"), HaltCondition::HaltL1);
+        assert_eq!(HaltCondition::get("2"), HaltCondition::HaltL2);
+        assert_eq!(HaltCondition::get("3"), HaltCondition::HaltL3);
+        assert_eq!(HaltCondition::get("$"), HaltCondition::ERROR);
     }
 
     #[test]
-    fn t_ssrstate_map() {
-        let map = super::SSRStateMap::new();
-        assert_eq!(map.get('~'), Some(&super::SSRState::NoSSR));
-        assert_eq!(map.get('E'), Some(&super::SSRState::SSR));
-        assert_eq!(map.get(' '), None);
+    fn t_ssrstate() {
+        assert_eq!(SSRState::get("~"), SSRState::NoSSR);
+        assert_eq!(SSRState::get("E"), SSRState::SSR);
+        assert_eq!(SSRState::get(" "), SSRState::ERROR);
     }
 
     #[test]
-    fn t_Market_state_nap() {
-        let map = super::MarketStateMap::new();
-        assert_eq!(map.get('P'), Some(&super::MarketState::PreOp));
-        assert_eq!(map.get('E'), Some(&super::MarketState::EarlySess));
-
-        assert_eq!(map.get('O'), Some(&super::MarketState::CoreSEss));
-        assert_eq!(map.get('L'), Some(&super::MarketState::LateSess));
-        assert_eq!(map.get('X'), Some(&super::MarketState::Closed));
-        assert_eq!(map.get('A'), None);
+    fn t_market_state() {
+        assert_eq!(MarketState::get("P"), MarketState::PreOp);
+        assert_eq!(MarketState::get("E"), MarketState::EarlySess);
+        assert_eq!(MarketState::get("O"), MarketState::CoreSEss);
+        assert_eq!(MarketState::get("L"), MarketState::LateSess);
+        assert_eq!(MarketState::get("X"), MarketState::Closed);
+        assert_eq!(MarketState::get("A"), MarketState::ERROR);
     }
 }
 
