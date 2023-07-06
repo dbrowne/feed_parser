@@ -67,23 +67,25 @@ pub enum MarketID {
     ERROR,
 }
 
-
-pub fn get_market_id(id: &str) -> MarketID {
-    match id {
-        "1" => MarketID::NYSE,
-        "3" => MarketID::NYSEArcaEq,
-        "4" => MarketID::NYSEArcaOpt,
-        "5" => MarketID::NYSEBonds,
-        "8" => MarketID::NYSEAmexOpt,
-        "9" => MarketID::NYSEAmerEq,
-        "10" => MarketID::NYSENatEq,
-        "11" => MarketID::NYSEChiEq,
-        _ => MarketID::ERROR,
+impl MarketID {
+    pub fn get(id: &str) -> MarketID {
+        match id {
+            "1" => MarketID::NYSE,
+            "3" => MarketID::NYSEArcaEq,
+            "4" => MarketID::NYSEArcaOpt,
+            "5" => MarketID::NYSEBonds,
+            "8" => MarketID::NYSEAmexOpt,
+            "9" => MarketID::NYSEAmerEq,
+            "10" => MarketID::NYSENatEq,
+            "11" => MarketID::NYSEChiEq,
+            _ => MarketID::ERROR,
+        }
     }
 }
 
+
 #[derive(PartialEq, Debug)]
-pub enum SecuryType {
+pub enum SecurityType {
     ADR,
     ComStk,
     Deben,
@@ -104,29 +106,31 @@ pub enum SecuryType {
     ERROR,
 }
 
-
-pub fn get_security_type(id: &str) -> SecuryType {
-    match id {
-        "A" => SecuryType::ADR,
-        "C" => SecuryType::ComStk,
-        "D" => SecuryType::Deben,
-        "E" => SecuryType::ETF,
-        "F" => SecuryType::Foreign,
-        "H" => SecuryType::ADShares,
-        "I" => SecuryType::Units,
-        "L" => SecuryType::IdxLnkdNotes,
-        "M" => SecuryType::OtherBlank,
-        "O" => SecuryType::OrdShrs,
-        "P" => SecuryType::Pfd,
-        "R" => SecuryType::Rights,
-        "S" => SecuryType::SoBenInt,
-        "T" => SecuryType::Test,
-        "U" => SecuryType::CEF,
-        "X" => SecuryType::IdxSec,
-        "Y" => SecuryType::War,
-        _ => SecuryType::ERROR
+impl SecurityType {
+    pub fn get(id: &str) -> SecurityType {
+        match id {
+            "A" => SecurityType::ADR,
+            "C" => SecurityType::ComStk,
+            "D" => SecurityType::Deben,
+            "E" => SecurityType::ETF,
+            "F" => SecurityType::Foreign,
+            "H" => SecurityType::ADShares,
+            "I" => SecurityType::Units,
+            "L" => SecurityType::IdxLnkdNotes,
+            "M" => SecurityType::OtherBlank,
+            "O" => SecurityType::OrdShrs,
+            "P" => SecurityType::Pfd,
+            "R" => SecurityType::Rights,
+            "S" => SecurityType::SoBenInt,
+            "T" => SecurityType::Test,
+            "U" => SecurityType::CEF,
+            "X" => SecurityType::IdxSec,
+            "Y" => SecurityType::War,
+            _ => SecurityType::ERROR
+        }
     }
 }
+
 
 
 #[derive(PartialEq, Debug)]
@@ -137,14 +141,17 @@ pub enum PriceResolution {
     ERROR,
 }
 
-pub fn get_price_resolution(id: &str) -> PriceResolution {
-    match id {
-        "0" => PriceResolution::AllPenny,
-        "1" => PriceResolution::PennyNickel,
-        "5" => PriceResolution::NickelDime,
-        _ => PriceResolution::ERROR,
+impl PriceResolution{
+    pub fn get(id: &str) -> PriceResolution {
+        match id {
+            "0" => PriceResolution::AllPenny,
+            "1" => PriceResolution::PennyNickel,
+            "5" => PriceResolution::NickelDime,
+            _ => PriceResolution::ERROR,
+        }
     }
 }
+
 
 
 #[cfg(test)]
@@ -152,47 +159,47 @@ mod test {
     #[test]
     fn test_market_id() {
         use super::*;
-        assert_eq!(get_market_id("1"), MarketID::NYSE);
-        assert_eq!(get_market_id("3"), MarketID::NYSEArcaEq);
-        assert_eq!(get_market_id("4"), MarketID::NYSEArcaOpt);
-        assert_eq!(get_market_id("5"), MarketID::NYSEBonds);
-        assert_eq!(get_market_id("8"), MarketID::NYSEAmexOpt);
-        assert_eq!(get_market_id("9"), MarketID::NYSEAmerEq);
-        assert_eq!(get_market_id("10"), MarketID::NYSENatEq);
-        assert_eq!(get_market_id("11"), MarketID::NYSEChiEq);
-        assert_eq!(get_market_id("12"), MarketID::ERROR);
+        assert_eq!(MarketID::get("1"), MarketID::NYSE);
+        assert_eq!(MarketID::get("3"), MarketID::NYSEArcaEq);
+        assert_eq!(MarketID::get("4"), MarketID::NYSEArcaOpt);
+        assert_eq!(MarketID::get("5"), MarketID::NYSEBonds);
+        assert_eq!(MarketID::get("8"), MarketID::NYSEAmexOpt);
+        assert_eq!(MarketID::get("9"), MarketID::NYSEAmerEq);
+        assert_eq!(MarketID::get("10"), MarketID::NYSENatEq);
+        assert_eq!(MarketID::get("11"), MarketID::NYSEChiEq);
+        assert_eq!(MarketID::get("12"), MarketID::ERROR);
     }
 
 
     #[test]
     fn test_security_type() {
         use super::*;
-        assert_eq!(get_security_type("A"), SecuryType::ADR);
-        assert_eq!(get_security_type("C"), SecuryType::ComStk);
-        assert_eq!(get_security_type("D"), SecuryType::Deben);
-        assert_eq!(get_security_type("E"), SecuryType::ETF);
-        assert_eq!(get_security_type("F"), SecuryType::Foreign);
-        assert_eq!(get_security_type("H"), SecuryType::ADShares);
-        assert_eq!(get_security_type("I"), SecuryType::Units);
-        assert_eq!(get_security_type("L"), SecuryType::IdxLnkdNotes);
-        assert_eq!(get_security_type("M"), SecuryType::OtherBlank);
-        assert_eq!(get_security_type("O"), SecuryType::OrdShrs);
-        assert_eq!(get_security_type("P"), SecuryType::Pfd);
-        assert_eq!(get_security_type("R"), SecuryType::Rights);
-        assert_eq!(get_security_type("S"), SecuryType::SoBenInt);
-        assert_eq!(get_security_type("T"), SecuryType::Test);
-        assert_eq!(get_security_type("U"), SecuryType::CEF);
-        assert_eq!(get_security_type("X"), SecuryType::IdxSec);
-        assert_eq!(get_security_type("Y"), SecuryType::War);
-        assert_eq!(get_security_type("Z"), SecuryType::ERROR);
+        assert_eq!(SecurityType::get("A"), SecurityType::ADR);
+        assert_eq!(SecurityType::get("C"), SecurityType::ComStk);
+        assert_eq!(SecurityType::get("D"), SecurityType::Deben);
+        assert_eq!(SecurityType::get("E"), SecurityType::ETF);
+        assert_eq!(SecurityType::get("F"), SecurityType::Foreign);
+        assert_eq!(SecurityType::get("H"), SecurityType::ADShares);
+        assert_eq!(SecurityType::get("I"), SecurityType::Units);
+        assert_eq!(SecurityType::get("L"), SecurityType::IdxLnkdNotes);
+        assert_eq!(SecurityType::get("M"), SecurityType::OtherBlank);
+        assert_eq!(SecurityType::get("O"), SecurityType::OrdShrs);
+        assert_eq!(SecurityType::get("P"), SecurityType::Pfd);
+        assert_eq!(SecurityType::get("R"), SecurityType::Rights);
+        assert_eq!(SecurityType::get("S"), SecurityType::SoBenInt);
+        assert_eq!(SecurityType::get("T"), SecurityType::Test);
+        assert_eq!(SecurityType::get("U"), SecurityType::CEF);
+        assert_eq!(SecurityType::get("X"), SecurityType::IdxSec);
+        assert_eq!(SecurityType::get("Y"), SecurityType::War);
+        assert_eq!(SecurityType::get("Z"), SecurityType::ERROR);
     }
 
     #[test]
     fn test_price_resolution() {
         use super::*;
-        assert_eq!(get_price_resolution("0"), PriceResolution::AllPenny);
-        assert_eq!(get_price_resolution("1"), PriceResolution::PennyNickel);
-        assert_eq!(get_price_resolution("5"), PriceResolution::NickelDime);
-        assert_eq!(get_price_resolution("6"), PriceResolution::ERROR);
+        assert_eq!(PriceResolution::get("0"), PriceResolution::AllPenny);
+        assert_eq!(PriceResolution::get("1"), PriceResolution::PennyNickel);
+        assert_eq!(PriceResolution::get("5"), PriceResolution::NickelDime);
+        assert_eq!(PriceResolution::get("6"), PriceResolution::ERROR);
     }
 }
