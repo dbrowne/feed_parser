@@ -62,10 +62,10 @@ impl T220 {
             trade_id: inp[5].parse::<i32>()?,
             price: inp[6].clone(),
             volume: inp[7].parse::<i32>()?,
-            trade_cond1: get_tc_1(&inp[8]),
-            trade_cond2: get_tc_2(&inp[9]),
-            trade_cond3: get_tc_3(&inp[10]),
-            trade_cond4: get_tc_4(&inp[11]),
+            trade_cond1: Tc1::get(&inp[8]),
+            trade_cond2: Tc2::get(&inp[9]),
+            trade_cond3: Tc3::get(&inp[10]),
+            trade_cond4: Tc4::get(&inp[11]),
         })
     }
 }
@@ -85,17 +85,18 @@ pub enum Tc1 {
     Error,
 }
 
-pub fn get_tc_1(inp: &str) -> Tc1 {
-    match inp {
-        "C" => Tc1::Cash,
-        "N" => Tc1::NextDayTrade,
-        " " => Tc1::RegularSaleTRF,
-        "R" => Tc1::Seller,
-        "@" => Tc1::RegularSale,
-        _ => Tc1::Error,
+impl Tc1 {
+    pub fn get(inp: &str) -> Tc1 {
+        match inp {
+            "C" => Tc1::Cash,
+            "N" => Tc1::NextDayTrade,
+            " " => Tc1::RegularSaleTRF,
+            "R" => Tc1::Seller,
+            "@" => Tc1::RegularSale,
+            _ => Tc1::Error,
+        }
     }
 }
-
 
 #[derive(PartialEq, Debug, Hash)]
 pub enum Tc2 {
@@ -118,20 +119,21 @@ pub enum Tc2 {
     Error,
 }
 
-pub fn get_tc_2(inp: &str) -> Tc2 {
-    match inp {
-        " " => Tc2::NA,
-        "F" => Tc2::ISO,
-        "O" => Tc2::MCO,
-        "4" => Tc2::DerivP,
-        "5" => Tc2::ReopeningTrade,
-        "6" => Tc2::MCCT,
-        "7" => Tc2::QCT,
-        "9" => Tc2::CCC,
-        _ => Tc2::Error,
+impl Tc2 {
+    pub fn get(inp: &str) -> Tc2 {
+        match inp {
+            " " => Tc2::NA,
+            "F" => Tc2::ISO,
+            "O" => Tc2::MCO,
+            "4" => Tc2::DerivP,
+            "5" => Tc2::ReopeningTrade,
+            "6" => Tc2::MCCT,
+            "7" => Tc2::QCT,
+            "9" => Tc2::CCC,
+            _ => Tc2::Error,
+        }
     }
 }
-
 
 #[derive(PartialEq, Debug, Hash)]
 pub enum Tc3 {
@@ -146,13 +148,15 @@ pub enum Tc3 {
     Error,
 }
 
-pub fn get_tc_3(inp: &str) -> Tc3 {
-    match inp {
-        " " => Tc3::NA,
-        "T" => Tc3::ExtendedHoursTrade,
-        "U" => Tc3::ExtendedHoursSold,
-        "Z" => Tc3::Sold,
-        _ => Tc3::Error,
+impl Tc3 {
+    pub fn get(inp: &str) -> Tc3 {
+        match inp {
+            " " => Tc3::NA,
+            "T" => Tc3::ExtendedHoursTrade,
+            "U" => Tc3::ExtendedHoursSold,
+            "Z" => Tc3::Sold,
+            _ => Tc3::Error,
+        }
     }
 }
 
@@ -175,7 +179,9 @@ pub enum Tc4 {
     Error,
 }
 
-pub fn get_tc_4(inp: &str) -> Tc4 {
+impl Tc4 {
+    
+pub fn get(inp: &str) -> Tc4 {
     match inp {
         " " => Tc4::NA,
         "I" => Tc4::OddLotTrade,
@@ -187,6 +193,7 @@ pub fn get_tc_4(inp: &str) -> Tc4 {
         _ => Tc4::Error,
     }
 }
+}
 
 
 #[cfg(test)]
@@ -195,46 +202,46 @@ mod test {
 
     #[test]
     fn test_get_tc4() {
-        assert_eq!(get_tc_4(" "), Tc4::NA);
-        assert_eq!(get_tc_4("I"), Tc4::OddLotTrade);
-        assert_eq!(get_tc_4("M"), Tc4::OClosePrice);
-        assert_eq!(get_tc_4("Q"), Tc4::OOpenPrice);
-        assert_eq!(get_tc_4("V"), Tc4::ContTrade);
-        assert_eq!(get_tc_4("P"), Tc4::PriorRefPrice);
-        assert_eq!(get_tc_4("W"), Tc4::WeightedAvgPrice);
-        assert_eq!(get_tc_4("A"), Tc4::Error);
+        assert_eq!(Tc4::get(" "), Tc4::NA);
+        assert_eq!(Tc4::get("I"), Tc4::OddLotTrade);
+        assert_eq!(Tc4::get("M"), Tc4::OClosePrice);
+        assert_eq!(Tc4::get("Q"), Tc4::OOpenPrice);
+        assert_eq!(Tc4::get("V"), Tc4::ContTrade);
+        assert_eq!(Tc4::get("P"), Tc4::PriorRefPrice);
+        assert_eq!(Tc4::get("W"), Tc4::WeightedAvgPrice);
+        assert_eq!(Tc4::get("A"), Tc4::Error);
     }
 
     #[test]
-    fn test_get_tc_1() {
-        assert_eq!(get_tc_1("@"), Tc1::RegularSale);
-        assert_eq!(get_tc_1("C"), Tc1::Cash);
-        assert_eq!(get_tc_1("N"), Tc1::NextDayTrade);
-        assert_eq!(get_tc_1(" "), Tc1::RegularSaleTRF);
-        assert_eq!(get_tc_1("R"), Tc1::Seller);
-        assert_eq!(get_tc_1(""), Tc1::Error);
+    fn test_tc1() {
+        assert_eq!(Tc1::get("@"), Tc1::RegularSale);
+        assert_eq!(Tc1::get("C"), Tc1::Cash);
+        assert_eq!(Tc1::get("N"), Tc1::NextDayTrade);
+        assert_eq!(Tc1::get(" "), Tc1::RegularSaleTRF);
+        assert_eq!(Tc1::get("R"), Tc1::Seller);
+        assert_eq!(Tc1::get(""), Tc1::Error);
     }
 
     #[test]
-    fn test_get_tc_2() {
-        assert_eq!(get_tc_2(" "), Tc2::NA);
-        assert_eq!(get_tc_2("F"), Tc2::ISO);
-        assert_eq!(get_tc_2("O"), Tc2::MCO);
-        assert_eq!(get_tc_2("4"), Tc2::DerivP);
-        assert_eq!(get_tc_2("5"), Tc2::ReopeningTrade);
-        assert_eq!(get_tc_2("6"), Tc2::MCCT);
-        assert_eq!(get_tc_2("7"), Tc2::QCT);
-        assert_eq!(get_tc_2("9"), Tc2::CCC);
-        assert_eq!(get_tc_2("A"), Tc2::Error);
+    fn test_tc2() {
+        assert_eq!(Tc2::get(" "), Tc2::NA);
+        assert_eq!(Tc2::get("F"), Tc2::ISO);
+        assert_eq!(Tc2::get("O"), Tc2::MCO);
+        assert_eq!(Tc2::get("4"), Tc2::DerivP);
+        assert_eq!(Tc2::get("5"), Tc2::ReopeningTrade);
+        assert_eq!(Tc2::get("6"), Tc2::MCCT);
+        assert_eq!(Tc2::get("7"), Tc2::QCT);
+        assert_eq!(Tc2::get("9"), Tc2::CCC);
+        assert_eq!(Tc2::get("A"), Tc2::Error);
     }
 
     #[test]
-    fn test_get_tc_3() {
-        assert_eq!(get_tc_3(" "), Tc3::NA);
-        assert_eq!(get_tc_3("T"), Tc3::ExtendedHoursTrade);
-        assert_eq!(get_tc_3("U"), Tc3::ExtendedHoursSold);
-        assert_eq!(get_tc_3("Z"), Tc3::Sold);
-        assert_eq!(get_tc_3("A"), Tc3::Error);
+    fn test_tc3get() {
+        assert_eq!(Tc3::get(" "), Tc3::NA);
+        assert_eq!(Tc3::get("T"), Tc3::ExtendedHoursTrade);
+        assert_eq!(Tc3::get("U"), Tc3::ExtendedHoursSold);
+        assert_eq!(Tc3::get("Z"), Tc3::Sold);
+        assert_eq!(Tc3::get("A"), Tc3::Error);
     }
 
     #[test]
