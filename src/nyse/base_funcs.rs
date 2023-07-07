@@ -36,8 +36,10 @@ use std::collections::HashMap;
 use std::error::Error;
 use crate::nyse::mt220::T220;
 use crate::time_funcs::time_to_dec;
+use priority_queue::PriorityQueue;
 
-#[derive(Eq, Hash, PartialEq, Debug,Copy, Clone)]
+
+#[derive(Eq, Hash, PartialEq, Debug, Copy, Clone)]
 pub enum NYSEMsg {
     T003,
     T034,
@@ -45,15 +47,17 @@ pub enum NYSEMsg {
     ERROR,
 }
 
-
-pub fn get_msg_type(msg: &str) -> NYSEMsg {
-    match msg {
-        "3" => NYSEMsg::T003,
-        "34" => NYSEMsg::T034,
-        "220" => NYSEMsg::T220,
-        _ => NYSEMsg::ERROR
+impl NYSEMsg {
+    pub fn get(msg: &str) -> NYSEMsg {
+        match msg {
+            "3" => NYSEMsg::T003,
+            "34" => NYSEMsg::T034,
+            "220" => NYSEMsg::T220,
+            _ => NYSEMsg::ERROR
+        }
     }
 }
+
 
 #[derive(Debug)]
 pub struct MsgStats {
@@ -80,7 +84,8 @@ pub struct TradeStats {
     symbols: HashMap<String, i32>,
     rate: HashMap<i32, i32>,
     // second and count per second
-    total_volume: HashMap<String, i32>,
+    symbol_volume: HashMap<String, i32>,
+    total_volume: i64,
 }
 
 impl TradeStats {
@@ -88,7 +93,8 @@ impl TradeStats {
         TradeStats {
             symbols: HashMap::new(),
             rate: HashMap::new(),
-            total_volume: HashMap::new(),
+            symbol_volume: HashMap::new(),
+            total_volume: 0,
         }
     }
 
@@ -99,9 +105,9 @@ impl TradeStats {
         let count = self.symbols.entry(symbol.clone()).or_insert(0);
         *count += 1;
 
-        let volume = self.total_volume.entry(symbol).or_insert(0);
+        let volume = self.symbol_volume.entry(symbol).or_insert(0);
         *volume += trade.volume;
-
+        self.total_volume += trade.volume as i64;
         let rate_count = self.rate.entry(second).or_insert(0);
         *rate_count += 1;
 
@@ -113,18 +119,14 @@ impl TradeStats {
     }
 
     pub fn get_count_per_symbol(&self, symbol: &str) -> i32 {
-        match self.total_volume.get(symbol) {
+        match self.symbol_volume.get(symbol) {
             Some(count) => *count,
             None => 0,
         }
     }
 
     pub fn get_total_volume(&self) -> i64 {
-        let mut total: i64 = 0;
-        for (_, volume) in &self.total_volume {
-            total += *volume as i64;
-        }
-        total
+        self.total_volume
     }
 
     pub fn get_average_rate(&self) -> f32 {
@@ -140,11 +142,86 @@ impl TradeStats {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct SymbolStats {
+    most_active: PriorityQueue<String, i32>,
+    highest_volume: PriorityQueue<String, i32>,
+    active_hash: HashMap<String, i32>,
+    active_volume: HashMap<String, i32>,
+    symbol_count: i32,
+
+}
+
+impl SymbolStats {
+    pub fn new() -> SymbolStats {
+        SymbolStats {
+            most_active: PriorityQueue::new(),
+            highest_volume: PriorityQueue::new(),
+            active_hash: HashMap::new(),
+            active_volume: HashMap::new(),
+            symbol_count: 0,
+        }
+    }
+
+    pub fn get_symbol_count(&self) -> i32 {
+        self.symbol_count
+    }
+
+    pub fn add(&mut self, symbol: &str) {
+        self.most_active.push(symbol.to_string(), 0);
+        self.highest_volume.push(symbol.to_string(), 0);
+        self.active_hash.insert(symbol.to_string(), 0);
+        self.active_volume.insert(symbol.to_string(), 0);
+        self.symbol_count += 1;
+    }
+    pub fn update(&mut self, symbol: &str, volume: i32) {
+        let mut active_count = self.active_hash.entry(symbol.to_string()).or_insert(0);
+        *active_count += 1;
+
+        let mut active_volume = self.active_volume.entry(symbol.to_string()).or_insert(0);
+        *active_volume += volume;
+
+        self.most_active.change_priority(&symbol.to_string(), *active_count);
+        self.highest_volume.change_priority(&symbol.to_string(), *active_volume);
+    }
+
+    pub fn get_most_active(&mut self) -> Vec<(String, i32)> {
+        let mut symbols: Vec<(String, i32)> = Vec::new();
+        let mut ctr = 0;
+
+        while !self.most_active.is_empty() {
+            let (symbol, volume) = self.most_active.pop().unwrap();
+            symbols.push((symbol.clone(), volume.clone()));
+            ctr += 1;
+            if ctr > 50 {
+                break;
+            }
+        }
+        symbols
+    }
+
+    pub fn get_highest_volume(&mut self) -> Vec<(String, i32)> {
+        let mut symbols: Vec<(String, i32)> = Vec::new();
+        let mut ctr = 0;
+
+        while !self.highest_volume.is_empty() {
+            let (symbol, volume) = self.highest_volume.pop().unwrap();
+            symbols.push((symbol.clone(), volume.clone()));
+            ctr += 1;
+            if ctr > 50 {
+                break;
+            }
+        }
+        symbols
+    }
+}
+
 
 #[derive(Debug)]
 pub struct Stats {
     pub msg_stats: MsgStats,
     pub trade_stats: TradeStats,
+    pub  symbol_stats: SymbolStats,
 }
 
 impl Stats {
@@ -152,6 +229,7 @@ impl Stats {
         Stats {
             msg_stats: MsgStats::new(),
             trade_stats: TradeStats::new(),
+            symbol_stats: SymbolStats::new(),
         }
     }
 }
@@ -160,12 +238,11 @@ impl Stats {
 mod test {
     #[test]
     fn test_get_msg_type() {
-        use super::get_msg_type;
         use super::NYSEMsg;
-        assert_eq!(get_msg_type("3"), NYSEMsg::T003);
-        assert_eq!(get_msg_type("34"), NYSEMsg::T034);
-        assert_eq!(get_msg_type("220"), NYSEMsg::T220);
-        assert_eq!(get_msg_type("0"), NYSEMsg::ERROR);
+        assert_eq!(NYSEMsg::get("3"), NYSEMsg::T003);
+        assert_eq!(NYSEMsg::get("34"), NYSEMsg::T034);
+        assert_eq!(NYSEMsg::get("220"), NYSEMsg::T220);
+        assert_eq!(NYSEMsg::get("0"), NYSEMsg::ERROR);
     }
 
     #[test]
@@ -265,6 +342,54 @@ mod test {
         assert_eq!(stats.get_count_per_symbol("MSFT"), 2500);
         assert_eq!(stats.get_total_volume(), 4500);
         assert_eq!(stats.get_average_rate().round(), 4.0);
+    }
 
+    #[test]
+    fn test_symbol_stats_add() {
+        use super::SymbolStats;
+        let mut stats = SymbolStats::new();
+        stats.add("IBM");
+        stats.add("AAPL");
+        stats.add("MSFT");
+        assert_eq!(stats.get_symbol_count(), 3);
+    }
+
+    #[test]
+    fn test_symbol_stats_add_volume() {
+        use super::SymbolStats;
+        let mut stats = SymbolStats::new();
+        stats.add("IBM");
+        stats.add("AAPL");
+        stats.add("MSFT");
+        stats.update("IBM", 1000);
+        stats.update("AAPL", 2000);
+        stats.update("AAPL", 2000);
+        stats.update("IBM", 10);
+        stats.update("IBM", 10);
+        stats.update("IBM", 10);
+        stats.update("IBM", 10);
+        stats.update("IBM", 10);
+        stats.update("IBM", 10);
+
+        assert_eq!(stats.get_highest_volume()[0], ("AAPL".to_string(), 4000));
+    }
+
+    #[test]
+    fn test_symbol_stat_add_active() {
+        use super::SymbolStats;
+        let mut stats = SymbolStats::new();
+        stats.add("IBM");
+        stats.add("AAPL");
+        stats.add("MSFT");
+        stats.update("IBM", 1000);
+        stats.update("AAPL", 2000);
+        stats.update("AAPL", 2000);
+        stats.update("IBM", 10);
+        stats.update("IBM", 10);
+        stats.update("IBM", 10);
+        stats.update("IBM", 10);
+        stats.update("IBM", 10);
+        stats.update("IBM", 10);
+        assert_eq!(stats.get_most_active()[0], ("IBM".to_string(), 7));
     }
 }

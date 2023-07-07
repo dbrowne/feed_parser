@@ -54,6 +54,9 @@ pub struct T34 {
     pub market_state: String,
 }
 
+
+
+
 #[derive(PartialEq, Debug)]
 pub enum SSRTexID {
     // spec maps C top both NSX and NYSE on pag 16 Dropping NSX

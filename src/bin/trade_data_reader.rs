@@ -37,7 +37,7 @@ use std::io::BufRead;
 use std::path::Path;
 use std::process::exit;
 use feed_parser::nyse::mt220::T220;
-use feed_parser::nyse::base_funcs::{NYSEMsg, get_msg_type, Stats};
+use feed_parser::nyse::base_funcs::{NYSEMsg, Stats};
 use thousands::Separable;
 use std::time::Instant;
 use walkdir::WalkDir;
@@ -91,6 +91,8 @@ fn process_file(data_file: String) {
     println!("Trade Message details: Number of symbols {}", stats.trade_stats.get_symbol_count().separate_with_commas());
     println!("Trade Message details: Trade Volume {}", stats.trade_stats.get_total_volume().separate_with_commas());
     println!("Trade Message details: average_rate {}/second ", stats.trade_stats.get_average_rate().separate_with_commas());
+    println!("50 Most Active Symbols: {:?} ",stats.symbol_stats.get_most_active());
+    println!("50 Highest Volume Symbols: {:?} ",stats.symbol_stats.get_highest_volume());
 }
 
 
@@ -100,19 +102,22 @@ fn process_line(line: String, stats: &mut Stats) -> Result<(), Box<dyn Error>> {
         .map(|s| s.to_string())
         .collect();
 
-    let msg_type = get_msg_type(&toks[0]);
+    let msg_type = NYSEMsg::get(&toks[0]);
 
     stats.msg_stats.add(msg_type);
 
     match msg_type {
-        NYSEMsg::T003 | NYSEMsg::T034 => {
+      NYSEMsg::T034 => {
             Ok(())
         }
-
+        NYSEMsg::T003 => {
+            Ok(stats.symbol_stats.add(&toks[2]))  // todo! need to fix this
+        }
         NYSEMsg::T220 => {
             match T220::new(toks) {
                 Ok(trade) => {
-                    stats.trade_stats.add(&trade)
+                    stats.trade_stats.add(&trade);
+                    Ok(stats.symbol_stats.update(&trade.symbol, trade.volume))// todo! need to fix this
                 }
                 Err(e) => {
                     Err(e)
