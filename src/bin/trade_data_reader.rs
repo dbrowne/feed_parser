@@ -34,9 +34,10 @@ use std::{env, io};
 use std::error::Error;
 use std::fs::File;
 use std::io::BufRead;
+use std::os::unix::raw::ino_t;
 use std::path::Path;
 use std::process::exit;
-use feed_parser::nyse::mt220::T220;
+use feed_parser::nyse::mt220::{T220, Tc2, Tc4};
 use feed_parser::nyse::base_funcs::{NYSEMsg, Stats};
 use thousands::Separable;
 use std::time::Instant;
@@ -116,7 +117,16 @@ fn process_line(line: String, stats: &mut Stats) -> Result<(), Box<dyn Error>> {
         NYSEMsg::T220 => {
             match T220::new(toks) {
                 Ok(trade) => {
-                    stats.trade_stats.add(&trade);
+                    if  trade.trade_cond4 == Tc4::OOpenPrice || trade.trade_cond4==Tc4::OClosePrice{
+                        return std::result::Result::Ok(());
+                    }
+                    if  trade.trade_cond2 == Tc2::MCCT || trade.trade_cond2==Tc2::MCO{
+                        return std::result::Result::Ok(());
+                    }
+                    _= stats.trade_stats.add(&trade);
+                    // if trade.symbol =="BAC" {
+                    //     println!("BAC: {:?}: {:?}, {:?}, {:?}, {:?}, {:?}, {:?} ", trade.source_time, trade.price, trade.volume, trade.trade_cond1, trade.trade_cond2,trade.trade_cond3,trade.trade_cond4     );
+                    // }
                     Ok(stats.symbol_stats.update(&trade.symbol, trade.volume))// todo! need to fix this
                 }
                 Err(e) => {

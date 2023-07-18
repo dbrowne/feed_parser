@@ -20,3 +20,33 @@ Trade Message details: Number of symbols 7,153
 Trade Message details: Trade Volume 2,321,186,061
 Trade Message details: average_rate 172.47787/second 
 
+7/6
+Processing file EQY_US_TAQ_NYSE_TRADES_20230103
+Processed 4,885,908 records in 8 seconds
+Symbol Index Mapping Messages 11,824
+Symbol Security Status Message 62,082
+Trade Messages 4,812,002
+Trade Message details: Number of symbols 7,498
+Trade Message details: Trade Volume 2,286,555,385
+Trade Message details: average_rate 185.548/second
+50 Most Active Symbols: [("TSLA", 31044), ("BABA", 23243), ("XOM", 22227), ("CVX", 19548), ("AAPL", 19324), ("SPY", 18892), ("NKE", 16445), ("CNC", 15812), ("OXY", 14276), ("MPC", 14186), ("DIS", 14128), ("SQ", 14009), ("CRM", 13865), ("DVN", 13857), ("PG", 13593), ("JPM", 13181), ("COP", 13141), ("HAL", 12972), ("ACWI", 12929), ("MSFT", 11995), ("PYPL", 11889), ("SLB", 11601), ("JNJ", 11489), ("VZ", 11351), ("PFE", 11223), ("SHOP", 11215), ("ORCL", 11046), ("KO", 11002), ("SQQQ", 10926), ("XPEV", 10891), ("WMT", 10791), ("C", 10630), ("SCHW", 10615), ("V", 10519), ("UBER", 10427), ("GE", 10413), ("BAC", 10395), ("MS", 10206), ("BX", 10156), ("NIO", 9910), ("BA", 9882), ("WFC", 9871), ("NVDA", 9838), ("U", 9715), ("TSM", 9663), ("MRK", 9608), ("AMZN", 9486), ("BBWI", 9294), ("BRK B", 9289), ("UNH", 9274), ("FCX", 8985)]
+50 Highest Volume Symbols: [("T", 36784942), ("BAC", 26118465), ("C", 18725371), ("VZ", 17882321), ("PFE", 17820415), ("F", 17114813), ("WFC", 14607197), ("PCG", 13173320), ("BBD", 12685347), ("KO", 12496461), ("JPM", 12019010), ("LUMN", 11676847), ("NIO", 11561617), ("WE", 11561234), ("XOM", 11313429), ("PLTR", 10768810), ("CCL", 10749603), ("SWN", 10402854), ("PBR", 9446175), ("VALE", 9425648), ("DIS", 9248350), ("KSS", 9213053), ("GM", 9024529), ("UBER", 8901647), ("MRK", 8849944), ("KEY", 8736600), ("TFC", 8454758), ("STT", 8118825), ("HPE", 7918139), ("BMY", 7535031), ("CIG", 7436066), ("KMI", 7352192), ("ABEV", 7332616), ("CVX", 7313213), ("JNJ", 7285228), ("UAA", 7214204), ("RF", 7129216), ("NEM", 7055754), ("AMCR", 6963539), ("NKE", 6888744), ("PG", 6680931), ("USB", 6467689), ("UMC", 6444654), ("DVN", 6423545), ("ORCL", 6295214), ("HBI", 6279140), ("MPW", 6088833), ("LUV", 5972871), ("SLB", 5938688), ("PINS", 5836193), ("WU", 5717422)]
+
+
+-----------------------------------
+
+
+Processing file EQY_US_TAQ_NYSE_TRADES_20230404
+Processed 4,459,820 records in 7 seconds
+Symbol Index Mapping Messages 11,588
+Symbol Security Status Message 60,740
+Trade Messages 4,387,492
+Trade Message details: Number of symbols 7,153
+Trade Message details: Trade Volume 2,321,186,061
+Trade Message details: average_rate 172.47787/second
+50 Most Active Symbols: [("AI", 49248), ("BABA", 21247), ("XOM", 20629), ("TSLA", 18924), ("SPY", 17113), ("CVX", 15447), ("SCHW", 13337), ("SQ", 13260), ("V", 13142), ("CRM", 12522), ("FRC", 11960), ("JPM", 11875), ("JNJ", 11865), ("TFC", 11763), ("NKE", 11618), ("OXY", 11567), ("WWE", 11563), ("WFC", 11523), ("PSX", 11142), ("VLO", 11137), ("GE", 11091), ("BA", 10678), ("COP", 10553), ("RBLX", 10309), ("PG", 10273), ("ETN", 9939), ("BLDR", 9895), ("SNOW", 9755), ("EDR", 9624), ("SHOP", 9556), ("MPC", 9439), ("CFG", 9157), ("STZ", 9033), ("DVN", 8988), ("SLB", 8987), ("BAC", 8831), ("CAT", 8779), ("WMT", 8696), ("DIS", 8669), ("AMZN", 8610), ("MRO", 8546), ("HAL", 8537), ("TECK", 8519), ("FCX", 8487), ("NEM", 8469), ("LOW", 8226), ("ZIM", 8182), ("C", 8016), ("IBM", 7958), ("MS", 7861), ("ONON", 7761)]
+50 Highest Volume Symbols: [("BAC", 30385922), ("T", 28312611), ("F", 21528943), ("CCL", 19449872), ("PFE", 18304499), ("VZ", 15745987), ("TFC", 14803912), ("SWN", 14226007), ("WFC", 12988031), ("KO", 12970739), ("VALE", 12414030), ("APE", 11898517), ("WU", 11616895), ("BAX", 11261731), ("KEY", 10754467), ("AI", 10461589), ("RBLX", 10449295), ("VICI", 10058548), ("XOM", 9908871), ("SCHW", 9792897), ("HAL", 9603328), ("JPM", 9343959), ("NIO", 9188669), ("AMC", 9115924), ("BMY", 8957835), ("NOK", 8613765), ("RF", 8436744), ("LUMN", 8386281), ("PCG", 8305557), ("HPE", 8261542), ("KMI", 8137258), ("GM", 8105940), ("FCX", 8098209), ("AMCR", 8023357), ("C", 8011434), ("MO", 7861272), ("UBER", 7817875), ("GOLD", 7780071), ("USB", 7744752), ("ABT", 7527824), ("FRC", 7411627), ("LU", 7340652), ("CLF", 7294265), ("MPW", 7261819), ("ETRN", 7006660), ("PLTR", 6920097), ("NEM", 6893661), ("NYCB", 6865859), ("ELAN", 6809130), ("CVX", 6754176), ("JNJ", 6716709)]
+
+
+-----------------------------------
+

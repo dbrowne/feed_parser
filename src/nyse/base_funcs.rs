@@ -37,7 +37,7 @@ use std::error::Error;
 use crate::nyse::mt220::T220;
 use crate::time_funcs::time_to_dec;
 use priority_queue::PriorityQueue;
-
+use crate::event_structs::EventList;
 
 #[derive(Eq, Hash, PartialEq, Debug, Copy, Clone)]
 pub enum NYSEMsg {
@@ -86,6 +86,7 @@ pub struct TradeStats {
     // second and count per second
     symbol_volume: HashMap<String, i32>,
     total_volume: i64,
+    symbol_tics: HashMap<String, EventList>,
 }
 
 impl TradeStats {
@@ -95,6 +96,7 @@ impl TradeStats {
             rate: HashMap::new(),
             symbol_volume: HashMap::new(),
             total_volume: 0,
+            symbol_tics: HashMap::new(),
         }
     }
 
@@ -110,6 +112,7 @@ impl TradeStats {
         self.total_volume += trade.volume as i64;
         let rate_count = self.rate.entry(second).or_insert(0);
         *rate_count += 1;
+
 
         Ok(())
     }
