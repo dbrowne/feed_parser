@@ -94,7 +94,7 @@ fn process_file(data_file: String) {
     println!("Trade Message details: average_rate {}/second ", stats.trade_stats.get_average_rate().separate_with_commas());
     println!("50 Most Active Symbols: {:?} ",stats.symbol_stats.get_most_active());
     println!("50 Highest Volume Symbols: {:?} ",stats.symbol_stats.get_highest_volume());
-    println!("BAC Activity: {:?}",stats.event_stats.symbol_events.get("TSLA"));
+    println!("{} Activity: {:?}","TSLA",stats.event_stats.symbol_events.get("TSLA").unwrap().get_time_series());
 }
 
 

@@ -65,7 +65,8 @@ impl EventList {
         }
     }
     pub fn update(&mut self, seconds: f64, f_price: f32, volume: i32) {
-        let mut idx: i32 = seconds.round() as i32;
+        let mut idx: i32 = seconds as i32;
+
         let u_sec = ((seconds - (idx as f64)) * BILLION as f64) as i64;
 
         let price = (f_price as  f64 * PRICE_MULT) as i64;
@@ -100,7 +101,7 @@ impl EventList {
         total_tics as usize
     }
     pub fn get_time_series(&self) -> Vec<(f64, f32, i32)> {
-        let mut time_series = Vec::with_capacity(self.get_event_count());
+         let mut time_series = Vec::with_capacity(self.get_event_count());
         for (idx, event) in self.events.iter() {
             for tic in event.tics.iter() {
                 time_series.push(((idx.clone() as f64 + tic.u_sec as f64 / BILLION as f64), (tic.price as f64 / PRICE_MULT) as  f32, tic.volume));

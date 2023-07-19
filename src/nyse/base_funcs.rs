@@ -133,7 +133,7 @@ impl TradeStats {
 
 
     pub fn add(&mut self, trade: &T220) -> Result<(), Box<dyn Error>> {
-        let second = time_to_dec(&trade.source_time.as_str())?.round() as i32;
+        let second = time_to_dec(&trade.source_time.as_str())? as i32;
         let symbol = trade.symbol.clone();
 
         let count = self.symbols.entry(symbol.clone()).or_insert(0);
