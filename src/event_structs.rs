@@ -32,7 +32,7 @@
 
 
 pub const EXPECTED_TICS: usize = 16;
-pub const PRICE_MULT: f32 = 10_000.0;
+pub const PRICE_MULT: f64 = 10_000.0;
 pub const BILLION: i64 = 1_000_000_000;
 
 use std::collections::BTreeMap;
@@ -41,14 +41,14 @@ use std::collections::BTreeMap;
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub struct MuEvent {
     pub u_sec: i64,
-    pub price: i32,
+    pub price: i64,   //because of BRK.A almost at 500K/share we need an i64
     pub volume: i32,
 }
 
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub struct Event {
     pub tics: Vec<MuEvent>,
-    pub total_price: i32,
+    pub total_price: i64,
     pub total_volume: i32,
     pub tick_count: i32,
 }
@@ -68,7 +68,7 @@ impl EventList {
         let mut idx: i32 = seconds.round() as i32;
         let u_sec = ((seconds - (idx as f64)) * BILLION as f64) as i64;
 
-        let price = (f_price * PRICE_MULT) as i32;
+        let price = (f_price as  f64 * PRICE_MULT) as i64;
         if let Some(event) = self.events.get_mut(&idx) {
             event.update(price, volume, u_sec);
         } else {
@@ -90,7 +90,7 @@ impl EventList {
             total_price += event.total_price;
             total_ticks += event.tick_count;
         }
-        (total_price as f32 / PRICE_MULT) / total_ticks as f32
+        (((total_price as  f64) / PRICE_MULT) / total_ticks as f64) as  f32
     }
     pub fn get_event_count(&self) -> usize {
         let mut total_tics = 0;
@@ -103,7 +103,7 @@ impl EventList {
         let mut time_series = Vec::with_capacity(self.get_event_count());
         for (idx, event) in self.events.iter() {
             for tic in event.tics.iter() {
-                time_series.push(((idx.clone() as f64 + tic.u_sec as f64 / BILLION as f64), tic.price as f32 / PRICE_MULT, tic.volume));
+                time_series.push(((idx.clone() as f64 + tic.u_sec as f64 / BILLION as f64), (tic.price as f64 / PRICE_MULT) as  f32, tic.volume));
             }
         }
         time_series
@@ -118,7 +118,7 @@ impl EventList {
 }
 
 impl Event {
-    pub fn new(price: i32, volume: i32, seconds: i64) -> Event {
+    pub fn new(price: i64, volume: i32, seconds: i64) -> Event {
         let mut initial_tic = Vec::with_capacity(EXPECTED_TICS);
         initial_tic.push(MuEvent { u_sec: seconds, price, volume });
         Event {
@@ -129,7 +129,7 @@ impl Event {
         }
     }
     // would have error checking here if this were production code  but it's not
-    pub fn update(&mut self, price: i32, volume: i32, u_sec: i64) {
+    pub fn update(&mut self, price: i64, volume: i32, u_sec: i64) {
         self.total_price += price;
         self.total_volume += volume;
         self.tick_count += 1;

@@ -80,13 +80,45 @@ impl MsgStats {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct EventStats {
+   pub symbol_events: HashMap<String, EventList>,
+}
+
+impl EventStats {
+    pub fn new() -> EventStats {
+        EventStats {
+            symbol_events: HashMap::new(),
+        }
+    }
+    pub fn init(&mut self, symbol: &str) {
+        let event_list = EventList::new();
+        self.symbol_events.insert(symbol.to_string(), event_list);
+    }
+    pub fn update(&mut self, symbol: &str, seconds:&str, s_price:&str, volume:i32 ) -> Result<(), Box<dyn Error>>{
+
+        match self.symbol_events.get_mut(symbol) {
+            Some(event_list) => {
+                let f_second = time_to_dec(seconds)?;
+                let price: f32 = s_price.parse::<f32>()?;
+                event_list.update(f_second, price, volume);
+            }
+            None => {
+                return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "Symbol not found")));
+            }
+        }
+
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct TradeStats {
     symbols: HashMap<String, i32>,
     rate: HashMap<i32, i32>,
     // second and count per second
     symbol_volume: HashMap<String, i32>,
     total_volume: i64,
-    symbol_tics: HashMap<String, EventList>,
+
 }
 
 impl TradeStats {
@@ -96,9 +128,9 @@ impl TradeStats {
             rate: HashMap::new(),
             symbol_volume: HashMap::new(),
             total_volume: 0,
-            symbol_tics: HashMap::new(),
         }
     }
+
 
     pub fn add(&mut self, trade: &T220) -> Result<(), Box<dyn Error>> {
         let second = time_to_dec(&trade.source_time.as_str())?.round() as i32;
@@ -224,7 +256,8 @@ impl SymbolStats {
 pub struct Stats {
     pub msg_stats: MsgStats,
     pub trade_stats: TradeStats,
-    pub  symbol_stats: SymbolStats,
+    pub symbol_stats: SymbolStats,
+    pub  event_stats: EventStats,
 }
 
 impl Stats {
@@ -233,6 +266,7 @@ impl Stats {
             msg_stats: MsgStats::new(),
             trade_stats: TradeStats::new(),
             symbol_stats: SymbolStats::new(),
+            event_stats: EventStats::new(),
         }
     }
 }

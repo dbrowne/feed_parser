@@ -34,7 +34,6 @@ use std::{env, io};
 use std::error::Error;
 use std::fs::File;
 use std::io::BufRead;
-use std::os::unix::raw::ino_t;
 use std::path::Path;
 use std::process::exit;
 use feed_parser::nyse::mt220::{T220, Tc2, Tc4};
@@ -42,6 +41,7 @@ use feed_parser::nyse::base_funcs::{NYSEMsg, Stats};
 use thousands::Separable;
 use std::time::Instant;
 use walkdir::WalkDir;
+use chrono::prelude::*;
 
 fn main() {
     dotenv().ok();
@@ -94,6 +94,7 @@ fn process_file(data_file: String) {
     println!("Trade Message details: average_rate {}/second ", stats.trade_stats.get_average_rate().separate_with_commas());
     println!("50 Most Active Symbols: {:?} ",stats.symbol_stats.get_most_active());
     println!("50 Highest Volume Symbols: {:?} ",stats.symbol_stats.get_highest_volume());
+    println!("BAC Activity: {:?}",stats.event_stats.symbol_events.get("TSLA"));
 }
 
 
@@ -112,7 +113,9 @@ fn process_line(line: String, stats: &mut Stats) -> Result<(), Box<dyn Error>> {
             Ok(())
         }
         NYSEMsg::T003 => {
-            Ok(stats.symbol_stats.add(&toks[2]))  // todo! need to fix this
+            let  symbol = &toks[2];
+            stats.event_stats.init(&symbol.clone());
+            Ok(stats.symbol_stats.add(&symbol))
         }
         NYSEMsg::T220 => {
             match T220::new(toks) {
@@ -127,6 +130,7 @@ fn process_line(line: String, stats: &mut Stats) -> Result<(), Box<dyn Error>> {
                     // if trade.symbol =="BAC" {
                     //     println!("BAC: {:?}: {:?}, {:?}, {:?}, {:?}, {:?}, {:?} ", trade.source_time, trade.price, trade.volume, trade.trade_cond1, trade.trade_cond2,trade.trade_cond3,trade.trade_cond4     );
                     // }
+                    stats.event_stats.update(&trade.symbol, &trade.source_time, &trade.price, trade.volume)?;
                     Ok(stats.symbol_stats.update(&trade.symbol, trade.volume))// todo! need to fix this
                 }
                 Err(e) => {
