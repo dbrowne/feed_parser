@@ -108,6 +108,16 @@ fn sms2hhmmsnn(s: i64, ns: i64) -> String {
     )
 }
 
+pub  fn  time_dec_string(time: &str) -> Result<String, Box<dyn std::error::Error>>{
+     let t_secs: Vec<&str> = time.split('.').collect();
+        let t_hmss: Vec<&str> = t_secs[0].split(':').collect();
+        let t_h = t_hmss[0].parse::<i32>()?;
+        let t_m = t_hmss[1].parse::<i32>()?;
+        let t_s = t_hmss[2].parse::<i32>()?;
+        let  seconds = t_h*3600 + t_m*60 + t_s;
+       Ok(format!("{}.{:09}", seconds, t_secs[1]))
+}
+
 pub  fn time_to_dec(time: &str) -> Result<f64, Box<dyn std::error::Error>> {
     let parts: Vec<&str> = time.split(':').collect();
 
@@ -125,6 +135,13 @@ pub  fn time_to_dec(time: &str) -> Result<f64, Box<dyn std::error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_time_dec_string(){
+        let time = "07:00:00.044382720";
+        let dec = time_dec_string(time).unwrap();
+        assert_eq!(dec, "25200.044382720");
+    }
 
     #[test]
     fn test_all() {

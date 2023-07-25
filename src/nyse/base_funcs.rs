@@ -35,10 +35,9 @@
 use std::collections::HashMap;
 use std::error::Error;
 use crate::nyse::mt220::T220;
-use crate::time_funcs::time_to_dec;
+use crate::time_funcs::{time_dec_string, time_to_dec};
 use priority_queue::PriorityQueue;
 use crate::event_structs::EventList;
-
 
 #[derive(Eq, Hash, PartialEq, Debug, Copy, Clone)]
 pub enum NYSEMsg {
@@ -99,9 +98,8 @@ impl EventStats {
 
         match self.symbol_events.get_mut(symbol) {
             Some(event_list) => {
-                let f_second = time_to_dec(seconds)?;
-                let price: f32 = s_price.parse::<f32>()?;
-                event_list.update(f_second, price, volume);
+                let f_second = time_dec_string(seconds)?;
+                event_list.update(&f_second, s_price, volume);
             }
             None => {
                 return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "Symbol not found")));

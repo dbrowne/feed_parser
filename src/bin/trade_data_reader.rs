@@ -41,7 +41,6 @@ use feed_parser::nyse::base_funcs::{NYSEMsg, Stats};
 use thousands::Separable;
 use std::time::Instant;
 use walkdir::WalkDir;
-use chrono::prelude::*;
 
 fn main() {
     dotenv().ok();
