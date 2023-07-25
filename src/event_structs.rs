@@ -36,11 +36,14 @@ pub const PRICE_MULT: f64 = 10_000.0;
 pub const BILLION: i64 = 1_000_000_000;
 
 use std::collections::BTreeMap;
+use rust_decimal::prelude::*;
+
 
 /// MuEvent is a struct to hold the microsecond resolution trade event
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub struct MuEvent {
     pub u_sec: i64,
+    // pub  price:Decimal,
     pub price: i64,   //because of BRK.A almost at 500K/share we need an i64
     pub volume: i32,
 }
