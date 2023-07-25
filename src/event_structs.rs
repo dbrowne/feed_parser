@@ -41,12 +41,12 @@ use rust_decimal_macros::dec;
 use std::error::Error;
 
 
-/// `MuEvent` represents a single instance of a market event.
+/// `MuEvent` represents a single instance of a market event at microsecond resolution.
 ///
 /// It consists of the following fields:
 /// - `seconds`: The time of the event in seconds.
 /// - `price`: The price at which the event occurred.
-/// - `volume`: The volume of the event./// MuEvent is a struct to hold the microsecond resolution trade event
+/// - `volume`: The volume of the event.
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub struct MuEvent {
     pub seconds: Decimal,
@@ -69,7 +69,7 @@ pub struct Event {
     pub tic_count: i32,
 }
 
-/// `EventList` holds a map of `Event`s with the key being an integer.
+/// `EventList` holds a map of `Event`s with the key being the time in seconds of the event.
 ///
 /// It consists of the following fields:
 /// - `events`: A BTreeMap where the key is an integer and the value is an `Event`.
