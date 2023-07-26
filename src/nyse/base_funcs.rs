@@ -98,8 +98,8 @@ impl EventStats {
 
         match self.symbol_events.get_mut(symbol) {
             Some(event_list) => {
-                let f_second = time_dec_string(seconds)?;
-                event_list.update(&f_second, s_price, volume);
+
+                event_list.update(seconds, s_price, volume);
             }
             None => {
                 return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "Symbol not found")));
