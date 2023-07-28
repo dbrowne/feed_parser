@@ -39,6 +39,7 @@ use rust_decimal::prelude::*;
 use rust_decimal_macros::dec;
 use std::error::Error;
 use crate::time_funcs::time_dec_string;
+use crate::time_funcs::s2hhmmss_32;
 
 
 /// `MuEvent` represents a single instance of a market event at microsecond resolution.
@@ -70,6 +71,10 @@ pub struct Event {
     pub total_price: Decimal,
     pub total_volume: i32,
     pub tic_count: i32,
+    pub  max_price: Decimal,
+    pub  min_price: Decimal,
+    pub  max_volume: i32,
+    pub  min_volume: i32,
 }
 
 /// `EventList` holds a map of `Event`s with the key being the time in seconds of the event.
@@ -115,6 +120,29 @@ impl EventList {
 
         Ok(())
     }
+
+    pub fn get_min_max_price_volume(&self) -> (Decimal, Decimal, i32, i32) {
+        let mut max_price = dec!(0.0);
+        let mut min_price = dec!(100_000_000.0);
+        let mut max_volume = 0;
+        let mut min_volume = i32::MAX;
+        for (_, event) in self.events.iter() {
+            if event.max_price > max_price {
+                max_price = event.max_price;
+            }
+            if event.min_price < min_price {
+                min_price = event.min_price;
+            }
+            if event.max_volume > max_volume {
+                max_volume = event.max_volume;
+            }
+            if event.min_volume < min_volume {
+                min_volume = event.min_volume;
+            }
+        }
+        (min_price, max_price, min_volume, max_volume)
+    }
+
 
     /// Calculate the total volume of all `Event`s within the `EventList`.
     pub fn get_volume(&self) -> i32 {
@@ -179,24 +207,13 @@ impl EventList {
     pub fn get_sec_avg_time_series_s(&self) -> Vec<(String, f32, i32)> {
         let mut time_series: Vec<(String, f32, i32)> = Vec::with_capacity(self.get_event_count());
         for (idx, event) in self.events.iter() {
-            time_series.push((s2hhmmss(idx.clone()), event.get_avg_price().to_f32().unwrap(), event.get_volume()));
+            time_series.push((s2hhmmss_32(idx.clone()), event.get_avg_price().to_f32().unwrap(), event.get_volume()));
         }
         time_series
     }
 }
 
-// THIS IS CUT AND PASTE WILL REMOVE LATER!!! todo!!
-fn s2hhmmss(s: i32) -> String {
-    let mut neg = false;
-    let mut s = s;
-    if s < 0 {
-        neg = true;
-        s = -s;
-    }
-    let (h, s) = (s / 3600, s % 3600);
-    let (m, s) = (s / 60, s % 60);
-    format!("{}{:02}:{:02}:{:02}", if neg { "-" } else { "" }, h, m, s)
-}
+
 
 impl Event {
     /// Create a new `Event` with an initial `MuEvent`.
@@ -208,6 +225,11 @@ impl Event {
             total_price: price,
             total_volume: volume,
             tic_count: 1,
+            min_price: dec!(1_000_000_000.0),
+            max_price: price.clone(),
+            min_volume: 1_000_000_000,
+            max_volume: volume,
+
         }
     }
     // would have error checking here if this were production code  but it's not
@@ -217,6 +239,18 @@ impl Event {
         self.total_volume += volume;
         self.tic_count += 1;
         self.tics.push(MuEvent { string_time, seconds: u_sec, price, volume });
+        if price < self.min_price {
+            self.min_price = price;
+        }
+        if price > self.max_price {
+            self.max_price = price;
+        }
+        if volume < self.min_volume {
+            self.min_volume = volume;
+        }
+        if volume > self.max_volume {
+            self.max_volume = volume;
+        }
     }
     /// Calculate the average price of all `MuEvent`s within the `Event`.
     pub fn get_avg_price(&self) -> Decimal {
@@ -225,6 +259,14 @@ impl Event {
     /// Calculate the total volume of all `MuEvent`s within the `Event`.
     pub fn get_volume(&self) -> i32 {
         self.total_volume
+    }
+
+    pub  fn get_min_max_price(&self) -> (Decimal, Decimal) {
+        (self.min_price, self.max_price)
+    }
+
+    pub  fn get_min_max_volume(&self) -> (i32, i32) {
+        (self.min_volume, self.max_volume)
     }
 }
 
@@ -364,4 +406,20 @@ mod test {
         assert_eq!(ts, ans)
     }
 
+    #[test]
+    fn test_get_min_max_() {
+        let mut el: EventList = EventList::new();
+        el.update("09:20:00.491720704", "3.0", 10);
+        el.update("09:20:00.496720704", "6.0", 10);
+        el.update("09:20:00.491920704", "9.0", 10);
+        el.update("09:20:01.496720704", "3.0", 20);
+        el.update("09:20:01.496720784", "3.0", 20);
+        el.update("09:20:11.496720784", "9.0", 20);
+        let (min_p, max_p, min_vol, max_vol) = el.get_min_max_price_volume();
+
+        assert_eq!(min_p, dec!(3.0));
+        assert_eq!(max_p, dec!(9.0));
+        assert_eq!(min_vol, 10);
+        assert_eq!(max_vol, 20);
+    }
 }

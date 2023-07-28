@@ -40,7 +40,7 @@ pub trait Hhmmss {
     /// Pretty-prints a chrono::Duration in the form `HH:MM:SS.xxxxxxxxx`
     fn hhmmss(&self) -> String {
         let (s, _) = self.sns();
-        s2hhmmss(s)
+        s2hhmmss_64(s)
     }
     /// Pretty-prints a chrono::Duration in the form `HH:MM:SS.xxxxxxxxx`
     fn hhmmssnn(&self) -> String {
@@ -76,7 +76,7 @@ impl Hhmmss for time::Duration {
     }
 }
 
-fn s2hhmmss(s: i64) -> String {
+pub  fn s2hhmmss_64(s: i64) -> String {
     let mut neg = false;
     let mut s = s;
     if s < 0 {
@@ -87,6 +87,19 @@ fn s2hhmmss(s: i64) -> String {
     let (m, s) = (s / 60, s % 60);
     format!("{}{:02}:{:02}:{:02}", if neg { "-" } else { "" }, h, m, s)
 }
+
+pub fn s2hhmmss_32(s: i32) -> String {
+    let mut neg = false;
+    let mut s = s;
+    if s < 0 {
+        neg = true;
+        s = -s;
+    }
+    let (h, s) = (s / 3600, s % 3600);
+    let (m, s) = (s / 60, s % 60);
+    format!("{}{:02}:{:02}:{:02}", if neg { "-" } else { "" }, h, m, s)
+}
+
 
 fn sms2hhmmsnn(s: i64, ns: i64) -> String {
     let mut neg = false;

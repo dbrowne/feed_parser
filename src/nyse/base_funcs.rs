@@ -81,7 +81,7 @@ impl MsgStats {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct EventStats {
-   pub symbol_events: HashMap<String, EventList>,
+    pub symbol_events: HashMap<String, EventList>,
 }
 
 impl EventStats {
@@ -94,12 +94,10 @@ impl EventStats {
         let event_list = EventList::new();
         self.symbol_events.insert(symbol.to_string(), event_list);
     }
-    pub fn update(&mut self, symbol: &str, seconds:&str, s_price:&str, volume:i32 ) -> Result<(), Box<dyn Error>>{
-
+    pub fn update(&mut self, symbol: &str, seconds: &str, s_price: &str, volume: i32) -> Result<(), Box<dyn Error>> {
         match self.symbol_events.get_mut(symbol) {
             Some(event_list) => {
-
-                event_list.update(seconds, s_price, volume);
+                event_list.update(seconds, s_price, volume)?;
             }
             None => {
                 return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "Symbol not found")));
@@ -256,7 +254,7 @@ pub struct Stats {
     pub msg_stats: MsgStats,
     pub trade_stats: TradeStats,
     pub symbol_stats: SymbolStats,
-    pub  event_stats: EventStats,
+    pub event_stats: EventStats,
 }
 
 impl Stats {
