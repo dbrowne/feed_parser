@@ -41,7 +41,7 @@ use feed_parser::nyse::base_funcs::{NYSEMsg, Stats};
 use thousands::Separable;
 use std::time::Instant;
 use walkdir::WalkDir;
-use feed_parser::graphics::test_plot1::test_plot_002;
+use feed_parser::graphics::test_plot1::test_plot_003;
 
 fn main() {
     dotenv().ok();
@@ -95,9 +95,12 @@ fn process_file(data_file: String) {
     println!("50 Most Active Symbols: {:?} ",stats.symbol_stats.get_most_active());
     println!("50 Highest Volume Symbols: {:?} ",stats.symbol_stats.get_highest_volume());
     // println!("{} Activity: {:?}","TSLA",stats.event_stats.symbol_events.get("TSLA").unwrap().get_time_series());
-    let  event_list = stats.event_stats.symbol_events.get("TSLA").unwrap();
 
-    _= test_plot_002(event_list.get_time_series_s(),event_list.get_min_max_price_volume());
+    for (symbol,_) in stats.symbol_stats.get_most_active(){
+        let  event_list = stats.event_stats.symbol_events.get(&symbol).unwrap();
+        _= test_plot_003(&symbol, event_list.get_time_series_s(),event_list.get_min_max_price_volume());
+    }
+
 }
 
 
