@@ -82,6 +82,22 @@ fn detrend(inp: &Vec<f32>) -> Vec<f32> {
     detrended
 }
 
+/// Detrends a  time price, volume, series to a time price, detrnded price, series
+pub  fn detrended_price_series(inp: &Vec<(String, f32,i32)>) -> Vec<(String, f32,f32)>{
+
+    let  mut out:Vec<(String, f32,f32)> = Vec::with_capacity(inp.len());
+    let data : Vec<f32> = inp.iter().map(|x| x.1).collect();
+
+    let detrended_data = detrend(&data);
+
+    for (event, det_price)  in inp.iter().zip(detrended_data.iter())  {
+        out.push((event.0.clone(),event.1, *det_price));
+    }
+
+    out
+
+}
+
 
 #[cfg(test)]
 mod  test{
@@ -100,5 +116,46 @@ mod  test{
             assert_relative_eq!(pair.0, pair.1);
         }
         println!("{:?}",out);
+    }
+
+
+    #[test]
+    fn test_detrended_price_series(){
+        let  inp:Vec<(String, f32,i32)> = vec![("2018-01-01".to_string(),1.0,1),
+                                               ("2018-01-02".to_string(),2.0,2),
+                                               ("2018-01-03".to_string(),3.0,3),
+                                               ("2018-01-04".to_string(),4.0,4),
+                                               ("2018-01-05".to_string(),5.0,5),
+                                               ("2018-01-06".to_string(),5.5,6),
+                                               ("2018-01-07".to_string(),4.5,7),
+                                               ("2018-01-08".to_string(),4.0,8),
+                                               ("2018-01-09".to_string(),4.1,9),
+                                               ("2018-01-10".to_string(),4.2,10),
+                                               ("2018-01-11".to_string(),4.3,11),
+                                               ("2018-01-12".to_string(),4.4,12),
+                                               ("2018-01-13".to_string(),4.5,13),
+                                               ("2018-01-14".to_string(),4.6,14),
+                                               ("2018-01-15".to_string(),4.7,15),
+                                               ("2018-01-16".to_string(),4.0,16)];
+        let  out:Vec<(String, f32,f32)> = super::detrended_price_series(&inp);
+        let  ans:Vec<(String,f32, f32)> = vec![("2018-01-01".to_string(), 1.0, -1.9816177),
+                                               ("2018-01-02".to_string(), 2.0, -1.1157353),
+                                               ("2018-01-03".to_string(), 3.0, -0.24985294),
+                                               ("2018-01-04".to_string(), 4.0, 0.61602944),
+                                               ("2018-01-05".to_string(), 5.0, 1.4819118),
+                                               ("2018-01-06".to_string(), 5.5, 1.8477942),
+                                               ("2018-01-07".to_string(), 4.5, 0.7136765),
+                                               ("2018-01-08".to_string(), 4.0, 0.07955884),
+                                               ("2018-01-09".to_string(), 4.1, 0.045441102),
+                                               ("2018-01-10".to_string(), 4.2, 0.011323363),
+                                               ("2018-01-11".to_string(), 4.3, -0.0227939),
+                                               ("2018-01-12".to_string(), 4.4, -0.05691164),
+                                               ("2018-01-13".to_string(), 4.5, -0.091029376),
+                                               ("2018-01-14".to_string(), 4.6, -0.12514712),
+                                               ("2018-01-15".to_string(), 4.7, -0.15926485),
+                                               ("2018-01-16".to_string(), 4.0, -0.99338233)];
+
+        assert_eq!(out.len(),inp.len());
+        assert_eq!(out,ans);
     }
 }

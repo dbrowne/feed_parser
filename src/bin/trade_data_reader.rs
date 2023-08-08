@@ -41,7 +41,8 @@ use feed_parser::nyse::base_funcs::{NYSEMsg, Stats};
 use thousands::Separable;
 use std::time::Instant;
 use walkdir::WalkDir;
-use feed_parser::graphics::test_plot1::test_plot_003;
+use feed_parser::graphics::test_plot1::{test_plot_003, test_plot_004};
+use feed_parser::math_funcs::pre_processing::detrended_price_series;
 
 fn main() {
     dotenv().ok();
@@ -99,6 +100,8 @@ fn process_file(data_file: String) {
     for (symbol,_) in stats.symbol_stats.get_most_active(){
         let  event_list = stats.event_stats.symbol_events.get(&symbol).unwrap();
         _= test_plot_003(&symbol, event_list.get_time_series_s(),event_list.get_min_max_price_volume());
+        let detreneded_prices = detrended_price_series(&event_list.get_time_series_s());
+        _= test_plot_004(&symbol, detreneded_prices,event_list.get_min_max_price_volume());
     }
 
 }
