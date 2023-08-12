@@ -35,14 +35,21 @@
 
 const  BILLION: i64 = 1_000_000_000;
 
+/// Trait `Hhmmss` provides methods to represent time durations in `HH:MM:SS` and `HH:MM:SS.xxxxxxxxx` formats.
+
 pub trait Hhmmss {
+    /// Returns the duration as a tuple of seconds and nanoseconds.
+
     fn sns(&self) -> (i64, i64);
-    /// Pretty-prints a chrono::Duration in the form `HH:MM:SS.xxxxxxxxx`
+    /// Pretty-prints the duration in the format `HH:MM:SS`.
+    ///
+    /// This method ignores the nanosecond component of the duration.
     fn hhmmss(&self) -> String {
         let (s, _) = self.sns();
         s2hhmmss_64(s)
     }
-    /// Pretty-prints a chrono::Duration in the form `HH:MM:SS.xxxxxxxxx`
+
+    /// Pretty-prints the duration in the format `HH:MM:SS.xxxxxxxxx`.
     fn hhmmssnn(&self) -> String {
         let (s, ns) = self.sns();
         sms2hhmmsnn(s, ns)
@@ -75,7 +82,17 @@ impl Hhmmss for time::Duration {
         (s, ns as i64)
     }
 }
-
+/// Converts a duration represented in seconds into its `HH:MM:SS` string representation.
+///
+/// If the duration is negative, the output string will start with a '-'.
+///
+/// # Arguments
+///
+/// * `s` - The duration in seconds.
+///
+/// # Returns
+///
+/// * `String` - Formatted string in `HH:MM:SS` format.
 pub  fn s2hhmmss_64(s: i64) -> String {
     let mut neg = false;
     let mut s = s;
@@ -88,6 +105,17 @@ pub  fn s2hhmmss_64(s: i64) -> String {
     format!("{}{:02}:{:02}:{:02}", if neg { "-" } else { "" }, h, m, s)
 }
 
+/// Converts a duration represented in seconds (as i32) into its `HH:MM:SS` string representation.
+///
+/// If the duration is negative, the output string will start with a '-'.
+///
+/// # Arguments
+///
+/// * `s` - The duration in seconds.
+///
+/// # Returns
+///
+/// * `String` - Formatted string in `HH:MM:SS` format.
 pub fn s2hhmmss_32(s: i32) -> String {
     let mut neg = false;
     let mut s = s;
@@ -100,7 +128,18 @@ pub fn s2hhmmss_32(s: i32) -> String {
     format!("{}{:02}:{:02}:{:02}", if neg { "-" } else { "" }, h, m, s)
 }
 
-
+/// Converts a duration represented in seconds and nanoseconds into its `HH:MM:SS.xxxxxxxxx` string representation.
+///
+/// If the duration is negative, the output string will start with a '-'.
+///
+/// # Arguments
+///
+/// * `s` - The duration in seconds.
+/// * `ns` - The nanoseconds component of the duration.
+///
+/// # Returns
+///
+/// * `String` - Formatted string in `HH:MM:SS.xxxxxxxxx` format.
 fn sms2hhmmsnn(s: i64, ns: i64) -> String {
     let mut neg = false;
     let (mut s, mut ns) = (s, ns);
@@ -120,7 +159,42 @@ fn sms2hhmmsnn(s: i64, ns: i64) -> String {
         ns
     )
 }
-
+/// Converts a time string formatted as "HH:MM:SS.SSSSSSSSS" into a string representation
+/// of the total number of seconds followed by a period and nanoseconds.
+///
+/// # Arguments
+///
+/// * `time` - A string slice that holds the time formatted as "HH:MM:SS.SSSSSSSSS".
+///
+/// # Returns
+///
+/// * `Ok(String)` - If the input is successfully parsed, the function returns a formatted string
+///   representation of the total seconds, followed by a period and nanoseconds, in the format
+///   "SSSSSSSSS.SSSSSSSSS" where the left side of the period represents seconds and the right
+///   side represents nanoseconds (up to 9 digits of precision).
+///
+/// * `Err(Box<dyn std::error::Error>)` - If there's any issue in parsing the input string or
+///   performing calculations.
+///
+/// # Example
+///
+/// ```
+/// let input = "01:30:30.123456789";
+/// let result = time_dec_string(input).unwrap();
+/// assert_eq!(result, "5430.123456789");
+/// ```
+///
+/// # Errors
+///
+/// The function will return an error if:
+/// * The input string is not in the expected format.
+/// * Any of the time components (hours, minutes, seconds) cannot be parsed into integers.
+///
+/// # Panics
+///
+/// This function can panic if the input string does not have the expected number of split elements.
+/// This means if you don't provide a correct formatted string like "HH:MM:SS.SSSSSSSSS", it can panic.
+///
 pub  fn  time_dec_string(time: &str) -> Result<String, Box<dyn std::error::Error>>{
      let t_secs: Vec<&str> = time.split('.').collect();
         let t_hmss: Vec<&str> = t_secs[0].split(':').collect();
@@ -131,6 +205,39 @@ pub  fn  time_dec_string(time: &str) -> Result<String, Box<dyn std::error::Error
        Ok(format!("{}.{:09}", seconds, t_secs[1]))
 }
 
+/// Converts a time string in the format "HH:MM:SS.nnnnnnnnn" to its equivalent in decimal seconds.
+///
+/// # Arguments
+///
+/// * `time` - A string slice that represents the time in the format "HH:MM:SS.nnnnnnnnn".
+///
+/// # Returns
+///
+/// * `Ok(f64)` - If the input is successfully parsed, the function returns the total time
+///   in decimal seconds as a floating-point number.
+///
+/// * `Err(Box<dyn std::error::Error>)` - If there's any issue in parsing the input string
+///   or performing calculations.
+///
+/// # Example
+///
+/// ```
+/// let input = "01:30:30.5";
+/// let result = time_to_dec(input).unwrap();
+/// assert_eq!(result, 5430.5);
+/// ```
+///
+/// # Errors
+///
+/// The function will return an error in the following situations:
+/// * The input string is not in the expected format.
+/// * Any of the time components (hours, minutes, or seconds) cannot be parsed into a float.
+///
+/// # Panics
+///
+/// This function does not panic under normal operations, but misuse (like not handling errors)
+/// can lead to panic in the calling code.
+///
 pub  fn time_to_dec(time: &str) -> Result<f64, Box<dyn std::error::Error>> {
     let parts: Vec<&str> = time.split(':').collect();
 
