@@ -39,6 +39,7 @@ use crate::time_funcs::{time_dec_string, time_to_dec};
 use priority_queue::PriorityQueue;
 use crate::event_structs::EventList;
 
+/// Represents the NYSE messages we are currently processing.
 #[derive(Eq, Hash, PartialEq, Debug, Copy, Clone)]
 pub enum NYSEMsg {
     T003,
@@ -48,6 +49,7 @@ pub enum NYSEMsg {
 }
 
 impl NYSEMsg {
+    /// Converts a string message type to its corresponding NYSEMsg variant.
     pub fn get(msg: &str) -> NYSEMsg {
         match msg {
             "3" => NYSEMsg::T003,
@@ -59,6 +61,7 @@ impl NYSEMsg {
 }
 
 
+/// Message statistics
 #[derive(Debug)]
 pub struct MsgStats {
     pub msg_count: HashMap<NYSEMsg, i32>,
@@ -91,8 +94,8 @@ impl EventStats {
         }
     }
     pub fn init(&mut self, symbol: &str) {
-        let event_list = EventList::new();
-        self.symbol_events.insert(symbol.to_string(), event_list);
+
+        self.symbol_events.insert(symbol.to_string(), EventList::new());
     }
     pub fn update(&mut self, symbol: &str, seconds: &str, s_price: &str, volume: i32) -> Result<(), Box<dyn Error>> {
         match self.symbol_events.get_mut(symbol) {
