@@ -27,3 +27,5 @@ ndarray = "0.15.6"
 plotly = { version="0.8.3", features = ["ndarray","kaleido"] }
 nalgebra = "0.32.2"
 approx = "0.5.1"
+rustfft = "6.1.0"
+welch-sde = "0.1.0"

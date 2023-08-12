@@ -173,14 +173,14 @@ pub fn test_plot_003(ticker:&str, time_series: Vec<(String, f32, i32)>, min_max:
 pub fn test_plot_004(ticker:&str, time_series: Vec<(String, f32, f32)>, min_max: (Decimal, Decimal, i32, i32)) -> Result<(), Box<dyn Error>> {
     let mut time_line: Vec<String> = Vec::with_capacity(time_series.len());
     let mut price_line: Vec<f32> = Vec::with_capacity(time_series.len());
-    let mut detrend_line: Vec<f32> = Vec::with_capacity(time_series.len());
+    let mut fft_line: Vec<f32> = Vec::with_capacity(time_series.len());
     for (a, b, c) in time_series {
         time_line.push(a);
         price_line.push(b);
-        detrend_line.push(c);
+        fft_line.push(c);
     }
     let trace1 = Scatter::new(time_line.clone(), price_line).name("price");
-    let trace2 = Scatter::new(time_line.clone(), detrend_line).name("detrended_price").y_axis("y2");
+    let trace2 = Scatter::new(time_line.clone(), fft_line).name("fft_price").y_axis("y2");
     let mut plot = Plot::new();
     plot.add_trace(trace1);
     plot.add_trace(trace2);
@@ -191,8 +191,8 @@ pub fn test_plot_004(ticker:&str, time_series: Vec<(String, f32, f32)>, min_max:
     let mut title = String::new();
     let mut file_name = String::new();
 
-    fmt::write(&mut title, format_args!("{} Price_detrend Jan 3 2023 ",ticker)).unwrap();
-    fmt::write(&mut file_name, format_args!("plots/{}-price_detgrend.html",ticker)).unwrap();
+    fmt::write(&mut title, format_args!("{} Price_fft Jan 3 2023 ",ticker)).unwrap();
+    fmt::write(&mut file_name, format_args!("plots/{}-price_fft.html",ticker)).unwrap();
     let layout = Layout::new()
         .height(2200)
         .width(4200)
@@ -207,13 +207,11 @@ pub fn test_plot_004(ticker:&str, time_series: Vec<(String, f32, f32)>, min_max:
         ).title(Title::new(&title))
         .y_axis(Axis::new().title("price".into())
             .grid_color(Rgba::new(255, 255, 255, 0.25))
-            .dtick(0.125)
             .side(AxisSide::Left)
         )
-        .y_axis2(Axis::new().title("detrended_price".into())
+        .y_axis2(Axis::new().title("fft_amplitude".into())
             .grid_color(Rgba::new(255, 0, 0, 0.25))
             .overlaying("y")
-            .dtick(0.125)
             .side(AxisSide::Right)
 
         );
