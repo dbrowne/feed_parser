@@ -41,7 +41,7 @@ use feed_parser::nyse::base_funcs::{NYSEMsg, Stats};
 use thousands::Separable;
 use std::time::Instant;
 use walkdir::WalkDir;
-use feed_parser::graphics::test_plot1::{test_plot_003, test_plot_004};
+use feed_parser::graphics::test_plot1::{test_plot_003, test_plot_004, test_plot_005};
 use feed_parser::math_funcs::pre_processing::gen_price_with_fft;
 
 fn main() {
@@ -102,6 +102,7 @@ fn process_file(data_file: String) {
         _= test_plot_003(&symbol, event_list.get_full_time_series_s(),event_list.get_min_max_price_volume());
         let  fft_prices = gen_price_with_fft(&event_list.get_full_time_series_s());
         _= test_plot_004(&symbol, fft_prices, event_list.get_min_max_price_volume());
+        _= test_plot_005(&symbol, event_list.get_full_time_series_s(), event_list.get_max_tic_per_second());
     }
 
 }

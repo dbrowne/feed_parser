@@ -38,6 +38,7 @@ use std::f64;
 use rust_decimal::prelude::*;
 use rust_decimal_macros::dec;
 use std::error::Error;
+use nalgebra::max;
 use crate::time_funcs::{decimal2hhmmssnnn, time_dec_string};
 use crate::time_funcs::s2hhmmss_32;
 use crate::math_funcs::pre_processing::generate_series;
@@ -143,6 +144,18 @@ impl EventList {
         (min_price, max_price, min_volume, max_volume)
     }
 
+    pub  fn get_max_tic_per_second(&self) -> (i32, i32) {
+        let mut max_per_second = 0;
+        let mut time_of_max_rate:i32 =0;
+        for (tm, event) in self.events.iter() {
+            if event.tic_count > max_per_second {
+                max_per_second = event.tic_count;
+                time_of_max_rate = *tm;
+            }
+        }
+        (max_per_second,time_of_max_rate)
+    }
+
 
     /// Calculate the total volume of all `Event`s within the `EventList`.
     pub fn get_volume(&self) -> i32 {
@@ -241,7 +254,6 @@ impl Event {
             max_price: price.clone(),
             min_volume: 1_000_000_000,
             max_volume: volume,
-
         }
     }
     // would have error checking here if this were production code  but it's not
@@ -279,6 +291,10 @@ impl Event {
 
     pub fn get_min_max_volume(&self) -> (i32, i32) {
         (self.min_volume, self.max_volume)
+    }
+
+    pub fn get_tic_count(&self) -> i32 {
+        self.tic_count
     }
 }
 
@@ -379,10 +395,29 @@ mod test {
             (Decimal::new(33665491730707,9), dec!(11.38), 8),
             (Decimal::new(33725491730708,9), dec!(11.38), 9),
             (Decimal::new(33785491730709,9), dec!(11.38), 10)];
-        println!("{:?}", el.get_time_series(1));
-        // assert_eq!(el.get_time_series(1), ans);
+        assert_eq!(el.get_time_series(1), ans);
     }
 
+    #[test]
+    fn test_get_max_tics_per_second() {
+        let mut el = EventList::new();
+        let mut el = EventList::new();
+        el.update("09:20:00.491720704", "6.0", 1);
+        el.update("09:20:00.491720705", "12.0", 2);
+        el.update("09:20:00.491730704", "11.37", 3);
+        el.update("09:21:00.491730707", "11.38", 4);
+        el.update("09:21:02.491720704", "6.0", 5);
+        el.update("09:21:02.491720705", "12.0", 6);
+        el.update("09:21:02.491720706", "12.0", 7);
+        el.update("09:21:02.491720709", "12.0", 8);
+        el.update("09:21:02.491720715", "12.0", 9);
+        el.update("09:21:04.491730704", "11.37", 10);
+        el.update("09:21:05.491730707", "11.38", 11);
+        el.update("09:22:05.491730708", "11.38", 12);
+        el.update("09:23:05.491730709", "11.38", 13);
+        assert_eq!(el.get_max_tic_per_second(), (5,33662));
+
+    }
     #[test]
     fn test_get_sec_avg_time_series() {
         let mut el = EventList::new();

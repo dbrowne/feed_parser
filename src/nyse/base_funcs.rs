@@ -223,9 +223,10 @@ impl SymbolStats {
     pub fn get_most_active(&mut self) -> Vec<(String, i32)> {
         let mut symbols: Vec<(String, i32)> = Vec::new();
         let mut ctr = 0;
+        let  mut cloned_active = self.most_active.clone();
 
-        while !self.most_active.is_empty() {
-            let (symbol, volume) = self.most_active.pop().unwrap();
+        while !cloned_active.is_empty() {
+            let (symbol, volume) = cloned_active.pop().unwrap();
             symbols.push((symbol.clone(), volume.clone()));
             ctr += 1;
             if ctr > 50 {
@@ -238,9 +239,9 @@ impl SymbolStats {
     pub fn get_highest_volume(&mut self) -> Vec<(String, i32)> {
         let mut symbols: Vec<(String, i32)> = Vec::new();
         let mut ctr = 0;
-
-        while !self.highest_volume.is_empty() {
-            let (symbol, volume) = self.highest_volume.pop().unwrap();
+        let  mut cloned_volume = self.highest_volume.clone();
+        while !cloned_volume.is_empty() {
+            let (symbol, volume) = cloned_volume.pop().unwrap();
             symbols.push((symbol.clone(), volume.clone()));
             ctr += 1;
             if ctr > 50 {
