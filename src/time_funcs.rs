@@ -33,7 +33,14 @@
 // That's right HH:MM:SS.nnn_nnn_nnn  gotta deal with Nanoseconds
 // Based on Tiany Shi's hhmmss crate https://crates.io/crates/hhmmss
 
+use std::fmt::format;
+use rust_decimal::prelude::*;
+
 const  BILLION: i64 = 1_000_000_000;
+const  HOUR: f64 = 3_600.0;
+const  MINUTE: f64 = 60.0;
+
+
 
 /// Trait `Hhmmss` provides methods to represent time durations in `HH:MM:SS` and `HH:MM:SS.xxxxxxxxx` formats.
 
@@ -54,6 +61,8 @@ pub trait Hhmmss {
         let (s, ns) = self.sns();
         sms2hhmmsnn(s, ns)
     }
+
+
 }
 
 impl Hhmmss for chrono::Duration {
@@ -252,10 +261,27 @@ pub  fn time_to_dec(time: &str) -> Result<f64, Box<dyn std::error::Error>> {
     Ok(hours * 3600.0 + minutes * 60.0 + seconds)
 }
 
+pub  fn  decimal2hhmmssnnn(inp:Decimal) ->String {
+    let  seconds = inp.to_f64().unwrap();
+    let hours:i32= (seconds/HOUR) as  i32;
+    let minutes:i32 = (seconds%HOUR/MINUTE) as  i32;
+    let  sec:f64 = seconds%MINUTE;
+    let frac = seconds.fract();
+    let  fract_str = format!("{:09.9}", frac);
+    let  frac_sub = &fract_str[1..]; // remove the leading 0
+    format!("{:02}:{:02}:{:02}{}", hours, minutes, sec as i32,frac_sub)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    #[test]
+    fn test_decimal2hhmmssnnn(){
+        let inp = Decimal::from_f64(5430.123456789).unwrap();
+        let result = decimal2hhmmssnnn(inp);
+        assert_eq!(result, "01:30:30.123456789");
+    }
     #[test]
     fn test_time_dec_string(){
         let time = "07:00:00.044382720";

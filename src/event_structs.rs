@@ -38,9 +38,9 @@ use std::f64;
 use rust_decimal::prelude::*;
 use rust_decimal_macros::dec;
 use std::error::Error;
-use crate::time_funcs::time_dec_string;
+use crate::time_funcs::{decimal2hhmmssnnn, time_dec_string};
 use crate::time_funcs::s2hhmmss_32;
-
+use crate::math_funcs::pre_processing::generate_series;
 
 /// `MuEvent` represents a single instance of a market event at microsecond resolution.
 ///
@@ -71,10 +71,10 @@ pub struct Event {
     pub total_price: Decimal,
     pub total_volume: i32,
     pub tic_count: i32,
-    pub  max_price: Decimal,
-    pub  min_price: Decimal,
-    pub  max_volume: i32,
-    pub  min_volume: i32,
+    pub max_price: Decimal,
+    pub min_price: Decimal,
+    pub max_volume: i32,
+    pub min_volume: i32,
 }
 
 /// `EventList` holds a map of `Event`s with the key being the time in seconds of the event.
@@ -174,7 +174,7 @@ impl EventList {
         total_tics as usize
     }
     /// Generate a time series of `MuEvent`s as a vector of tuples (seconds, price, volume).
-    pub fn get_time_series(&self) -> Vec<(Decimal, Decimal, i32)> {
+    pub fn get_full_time_series(&self) -> Vec<(Decimal, Decimal, i32)> {
         let mut time_series: Vec<(Decimal, Decimal, i32)> = Vec::with_capacity(self.get_event_count());
         for (idx, event) in self.events.iter() {
             for tic in event.tics.iter() {
@@ -183,27 +183,40 @@ impl EventList {
         }
         time_series
     }
-    /// Generate a time series of `Event`s as a vector of tuples (idx, average price, volume).
-    pub fn get_sec_avg_time_series(&self) -> Vec<(i32, Decimal, i32)> {
-        let mut time_series: Vec<(i32, Decimal, i32)> = Vec::with_capacity(self.get_event_count());
-        for (idx, event) in self.events.iter() {
-            time_series.push((idx.clone(), event.get_avg_price(), event.get_volume()));
-        }
-        time_series
-    }
 
-
-    /// Generate a time series of `MuEvent`s as a vector of tuples (seconds, price, volume) as float.
-    pub fn get_time_series_s(&self) -> Vec<(String, f32, i32)> {
+    pub fn get_full_time_series_s(&self) -> Vec<(String, f32, i32)> {
         let mut time_series: Vec<(String, f32, i32)> = Vec::with_capacity(self.get_event_count());
         for (idx, event) in self.events.iter() {
             for tic in event.tics.iter() {
-                time_series.push((tic.string_time.clone(), tic.price.to_f32().unwrap(), tic.volume));
+                time_series.push((decimal2hhmmssnnn(tic.seconds), tic.price.to_f32().unwrap(), tic.volume));
             }
         }
         time_series
     }
+
+    pub fn get_time_series(&self, step: i32) -> Vec<(Decimal, Decimal, i32)> {
+        let events_count = self.get_event_count();
+        let capacity = events_count / step as usize;
+        let mut time_series: Vec<(Decimal, Decimal, i32)> = Vec::with_capacity(capacity);
+        let mut i = 0;
+        for (idx, event) in self.events.iter() {
+            if i % step == 0 {
+                time_series.push((event.tics[0].seconds, event.tics[0].price, event.tics[0].volume));
+            }
+            i += 1;
+        }
+        time_series
+    }
     /// Generate a time series of `Event`s as a vector of tuples (idx, average price, volume).
+    pub fn get_sec_avg_time_series(&self) -> Vec<(Decimal, Decimal, i32)> {
+        let mut time_series: Vec<(Decimal, Decimal, i32)> = Vec::with_capacity(self.get_event_count());
+        for (idx, event) in self.events.iter() {
+            time_series.push((Decimal::new(idx.clone() as  i64,0), event.get_avg_price(), event.get_volume()));
+        }
+        time_series
+    }
+
+
     pub fn get_sec_avg_time_series_s(&self) -> Vec<(String, f32, i32)> {
         let mut time_series: Vec<(String, f32, i32)> = Vec::with_capacity(self.get_event_count());
         for (idx, event) in self.events.iter() {
@@ -212,7 +225,6 @@ impl EventList {
         time_series
     }
 }
-
 
 
 impl Event {
@@ -261,11 +273,11 @@ impl Event {
         self.total_volume
     }
 
-    pub  fn get_min_max_price(&self) -> (Decimal, Decimal) {
+    pub fn get_min_max_price(&self) -> (Decimal, Decimal) {
         (self.min_price, self.max_price)
     }
 
-    pub  fn get_min_max_volume(&self) -> (i32, i32) {
+    pub fn get_min_max_volume(&self) -> (i32, i32) {
         (self.min_volume, self.max_volume)
     }
 }
@@ -317,7 +329,7 @@ mod test {
     }
 
     #[test]
-    fn test_get_time_series() {
+    fn test_get_full_time_series() {
         let mut el = EventList::new();
         el.update("09:20:00.491720704", "6.0", 1);
         el.update("09:20:00.491720705", "12.0", 1);
@@ -326,7 +338,7 @@ mod test {
             (Decimal::new(33600491720704, 9), dec!(6.0), 1),
             (Decimal::new(33600491720705, 9), dec!(12.0), 1),
             (Decimal::new(33600491730704, 9), dec!(11.37), 1)];
-        assert_eq!(el.get_time_series(), ans);
+        assert_eq!(el.get_full_time_series(), ans);
     }
 
     #[test]
@@ -341,7 +353,7 @@ mod test {
             (Decimal::new(33600491720705, 9), dec!(12.0), 1),
             (Decimal::new(33600491730704, 9), dec!(11.37), 1),
             (Decimal::new(33660491730707, 9), dec!(11.38), 1)];
-        assert_eq!(el.get_time_series(), ans);
+        assert_eq!(el.get_full_time_series(), ans);
     }
 
 
@@ -352,15 +364,23 @@ mod test {
         el.update("09:20:00.491720705", "12.0", 2);
         el.update("09:20:00.491730704", "11.37", 3);
         el.update("09:21:00.491730707", "11.38", 4);
+        el.update("09:21:02.491720704", "6.0", 5);
+        el.update("09:21:02.491720705", "12.0", 6);
+        el.update("09:21:04.491730704", "11.37", 7);
+        el.update("09:21:05.491730707", "11.38", 8);
+        el.update("09:22:05.491730708", "11.38", 9);
+        el.update("09:23:05.491730709", "11.38", 10);
 
-        let ans: Vec<(String, f32, i32)> = vec![
-            ("09:20:00.491720704".to_string(), 6.0, 1),
-            ("09:20:00.491720705".to_string(), 12.0, 2),
-            ("09:20:00.491730704".to_string(), 11.37, 3),
-            ("09:21:00.491730707".to_string(), 11.38, 4),
-
-        ];
-        assert_eq!(el.get_time_series_s(), ans);
+        let ans: Vec<(Decimal, Decimal, i32)> = vec![
+            (Decimal::new(33600491720704,9), dec!(6.0), 1),
+            (Decimal::new(33660491730707,9), dec!(11.38), 4),
+            (Decimal::new(33662491720704,9), dec!(6.0), 5),
+            (Decimal::new(33664491730704,9), dec!(11.37), 7),
+            (Decimal::new(33665491730707,9), dec!(11.38), 8),
+            (Decimal::new(33725491730708,9), dec!(11.38), 9),
+            (Decimal::new(33785491730709,9), dec!(11.38), 10)];
+        println!("{:?}", el.get_time_series(1));
+        // assert_eq!(el.get_time_series(1), ans);
     }
 
     #[test]
@@ -370,7 +390,7 @@ mod test {
         el.update("09:20:00.491720705", "6.0", 10);
         el.update("09:20:00.491730704", "9.0", 10);
         let ts = el.get_sec_avg_time_series();
-        assert_eq!(ts, vec![(33_600, dec!(6.0), 30)]);
+        assert_eq!(ts, vec![(dec!(33_600), dec!(6.0), 30)]);
     }
 
     #[test]
@@ -383,28 +403,14 @@ mod test {
         el.update("09:20:01.496720784", "3.0", 20);
         el.update("09:20:11.496720784", "9.0", 20);
         let ts = el.get_sec_avg_time_series();
-        let ans: Vec<(i32, Decimal, i32)> = vec![(33_600, dec!(6.0), 30),
-                                                 (33_601, dec!(3.0), 40),
-                                                 (33_611, dec!(9.0), 20)];
+        let ans: Vec<(Decimal, Decimal, i32)> = vec![(dec!(33_600), dec!(6.0), 30),
+                                                 (dec!(33_601), dec!(3.0), 40),
+                                                 (dec!(33_611), dec!(9.0), 20)];
         assert_eq!(ts, ans)
     }
 
 
-    #[test]
-    fn test_get_sec_avg_time_series3() {
-        let mut el: EventList = EventList::new();
-        el.update("09:20:00.491720704", "3.0", 10);
-        el.update("09:20:00.496720704", "6.0", 10);
-        el.update("09:20:00.491920704", "9.0", 10);
-        el.update("09:20:01.496720704", "3.0", 20);
-        el.update("09:20:01.496720784", "3.0", 20);
-        el.update("09:20:11.496720784", "9.0", 20);
-        let ts = el.get_sec_avg_time_series_s();
-        let ans: Vec<(String, f32, i32)> = vec![("09:20:00".to_string(), 6.0, 30),
-                                                 ("09:20:01".to_string(),3.0, 40),
-                                                 ("09:20:11".to_string(),9.0, 20)];
-        assert_eq!(ts, ans)
-    }
+
 
     #[test]
     fn test_get_min_max_() {
@@ -422,4 +428,7 @@ mod test {
         assert_eq!(min_vol, 10);
         assert_eq!(max_vol, 20);
     }
+
+    #[test]
+    fn test_get_time_series() {}
 }

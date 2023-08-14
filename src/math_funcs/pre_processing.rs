@@ -35,6 +35,8 @@ use approx;
 use rustfft::{FftPlanner, num_complex::Complex};
 use std::f32::consts::PI;
 use welch_sde::{Build, Periodogram, PowerSpectrum, SpectralDensity};
+use std::fmt::Write;
+use rand::{thread_rng, Rng};
 
 /// Extracts and separates the elements from a vector of tuples into individual vectors.
 ///
@@ -280,7 +282,7 @@ pub fn spectral_density(inp: &Vec<f32>) -> (Vec<f32>, f32) {
 
 
 ///// INTERNAL TEST FUNCTIONS /////
-fn generate_sin_wave(samples: usize, frequency: f32, max_time_seconds: f32) -> Vec<(String, f32, f32)> {
+pub  fn generate_sin_wave(samples: usize, frequency: f32, max_time_seconds: f32) -> Vec<(String, f32, f32)> {
     let mut result = Vec::new();
 
     for i in 0..samples {
@@ -300,7 +302,34 @@ fn generate_sin_wave(samples: usize, frequency: f32, max_time_seconds: f32) -> V
     result
 }
 
-fn generate_series(max_items: i32) -> Vec<(String, f32, i32)> {
+fn generate_time_series(hours: u32, minutes: u32, seconds: u32, n: u32) -> Vec<String> {
+    let mut rng = thread_rng();
+    let mut results = Vec::new();
+
+    let mut last_microsecond = 0;
+
+    for h in 0..hours {
+        for m in 0..minutes {
+            for s in 0..seconds {
+                let step = (1_000_000 - last_microsecond) / n;
+                for _ in 0..n {
+                    let range_start = last_microsecond + 1;
+                    let range_end = last_microsecond + step;
+                    let microseconds = rng.gen_range(range_start..range_end);
+                    last_microsecond = microseconds;
+
+                    let mut timestamp = String::new();
+                    write!(&mut timestamp, "{:02}:{:02}:{:02}.{:06}", h, m, s, microseconds).unwrap();
+                    results.push(timestamp);
+                }
+            }
+            last_microsecond = 0;  // Reset for the next minute.
+        }
+    }
+
+    results
+}
+pub  fn generate_series(max_items: i32) -> Vec<(String, f32, i32)> {
     let mut out: Vec<(String, f32, i32)> = Vec::with_capacity(max_items as usize);
     for i in 0..max_items {
         let time = format!("{}:00:00.000", i);

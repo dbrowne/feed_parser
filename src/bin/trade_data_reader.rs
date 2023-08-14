@@ -95,12 +95,12 @@ fn process_file(data_file: String) {
     println!("Trade Message details: average_rate {}/second ", stats.trade_stats.get_average_rate().separate_with_commas());
     println!("50 Most Active Symbols: {:?} ",stats.symbol_stats.get_most_active());
     println!("50 Highest Volume Symbols: {:?} ",stats.symbol_stats.get_highest_volume());
-    // println!("{} Activity: {:?}","TSLA",stats.event_stats.symbol_events.get("TSLA").unwrap().get_time_series());
+    // println!("{} Activity: {:?}","TSLA",stats.event_stats.symbol_events.get("TSLA").unwrap().get_full_time_series());
 
     for (symbol,_) in stats.symbol_stats.get_most_active(){
         let  event_list = stats.event_stats.symbol_events.get(&symbol).unwrap();
-        _= test_plot_003(&symbol, event_list.get_time_series_s(),event_list.get_min_max_price_volume());
-        let  fft_prices = gen_price_with_fft(&event_list.get_time_series_s());
+        _= test_plot_003(&symbol, event_list.get_full_time_series_s(),event_list.get_min_max_price_volume());
+        let  fft_prices = gen_price_with_fft(&event_list.get_full_time_series_s());
         _= test_plot_004(&symbol, fft_prices, event_list.get_min_max_price_volume());
     }
 
