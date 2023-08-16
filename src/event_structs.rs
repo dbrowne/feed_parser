@@ -256,6 +256,8 @@ impl Event {
             max_volume: volume,
         }
     }
+
+
     // would have error checking here if this were production code  but it's not
     /// Update an `Event` with a new `MuEvent` and recalculate the total price, total volume and tic_count.
     pub fn update(&mut self, price: Decimal, volume: i32, u_sec: Decimal, string_time: String) {
@@ -464,6 +466,4 @@ mod test {
         assert_eq!(max_vol, 20);
     }
 
-    #[test]
-    fn test_get_time_series() {}
 }

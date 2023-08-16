@@ -41,9 +41,9 @@ use feed_parser::nyse::base_funcs::{NYSEMsg, Stats};
 use thousands::Separable;
 use std::time::Instant;
 use walkdir::WalkDir;
-use feed_parser::graphics::test_plot1::{test_plot_003, test_plot_004, test_plot_005};
+use feed_parser::graphics::test_plot1::{test_plot_003, test_plot_004, test_power_spec_graph, test_spectral_density_graph};
 use feed_parser::math_funcs::pre_processing::gen_price_with_fft;
-
+use indicatif::ProgressBar;
 fn main() {
     dotenv().ok();
     let data_dir = env::var("NYSE_TRADE_DATA_DIR").expect("No Data file found!");
@@ -66,6 +66,7 @@ fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
 fn process_file(data_file: String) {
     let start = Instant::now();
     println!("Processing file {}", data_file);
+    let  bar = ProgressBar::new(4_800_000);
     let mut stats = Stats::new();
     let mut ctr = 0;
     if let Ok(lines) = read_lines(data_file) {
@@ -78,9 +79,11 @@ fn process_file(data_file: String) {
                     Err(e) => {
                         println!("error processing line :{}", ctr);
                         println!("error: {}", e);
+                        bar.finish_with_message("failed");
                         exit(1);
                     }
                 }
+                bar.inc(1);
             }
         }
     }
@@ -102,8 +105,10 @@ fn process_file(data_file: String) {
         _= test_plot_003(&symbol, event_list.get_full_time_series_s(),event_list.get_min_max_price_volume());
         let  fft_prices = gen_price_with_fft(&event_list.get_full_time_series_s());
         _= test_plot_004(&symbol, fft_prices, event_list.get_min_max_price_volume());
-        _= test_plot_005(&symbol, event_list.get_full_time_series_s(), event_list.get_max_tic_per_second());
+        _= test_power_spec_graph(&symbol, event_list.get_full_time_series_s(), event_list.get_max_tic_per_second());
+        _= test_spectral_density_graph(&symbol, event_list.get_full_time_series_s(), event_list.get_max_tic_per_second());
     }
+    bar.finish_with_message("done");
 
 }
 
@@ -137,9 +142,6 @@ fn process_line(line: String, stats: &mut Stats) -> Result<(), Box<dyn Error>> {
                         return std::result::Result::Ok(());
                     }
                     _= stats.trade_stats.add(&trade);
-                    // if trade.symbol =="BAC" {
-                    //     println!("BAC: {:?}: {:?}, {:?}, {:?}, {:?}, {:?}, {:?} ", trade.source_time, trade.price, trade.volume, trade.trade_cond1, trade.trade_cond2,trade.trade_cond3,trade.trade_cond4     );
-                    // }
                     stats.event_stats.update(&trade.symbol, &trade.source_time, &trade.price, trade.volume)?;
                     Ok(stats.symbol_stats.update(&trade.symbol, trade.volume))// todo! need to fix this
                 }

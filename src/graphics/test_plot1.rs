@@ -29,6 +29,7 @@
  *
  */
 
+use std::env::set_current_dir;
 use std::error::Error;
 use std::fmt;
 use ndarray::Array;
@@ -46,7 +47,8 @@ use plotly::{
 
 use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
-use crate::math_funcs::pre_processing::{detrend, power_spectrum};
+use welch_sde::{Build, SpectralDensity};
+use crate::math_funcs::pre_processing::{detrend, power_spectrum, sd_graph};
 use crate::time_funcs::s2hhmmss_32;
 
 
@@ -226,7 +228,7 @@ pub fn test_plot_004(ticker:&str, time_series: Vec<(String, f32, f32)>, min_max:
 
 
 // gets the power spectrum of the price data
-pub fn test_plot_005(ticker:&str, time_series: Vec<(String, f32, i32)>, max_time:(i32,i32)) -> Result<(), Box<dyn Error>> {
+pub fn test_power_spec_graph(ticker:&str, time_series: Vec<(String, f32, i32)>, max_time:(i32, i32)) -> Result<(), Box<dyn Error>> {
     let mut time_line: Vec<String> = Vec::with_capacity(time_series.len());
     let mut price_line: Vec<f32> = Vec::with_capacity(time_series.len());
     let mut fft_line: Vec<f32> = Vec::with_capacity(time_series.len());
@@ -289,6 +291,77 @@ pub fn test_plot_005(ticker:&str, time_series: Vec<(String, f32, i32)>, max_time
     plot.write_html(&file_name);
     Ok(())
 }
+
+
+pub fn test_spectral_density_graph(ticker:&str, time_series: Vec<(String, f32, i32)>, max_time:(i32, i32)) -> Result<(), Box<dyn Error>> {
+    let mut time_line: Vec<String> = Vec::with_capacity(time_series.len());
+    let mut price_line: Vec<f32> = Vec::with_capacity(time_series.len());
+    let mut fft_line: Vec<f32> = Vec::with_capacity(time_series.len());
+
+
+    // max_per_second is the max number of tics per second and will be used to determine the frequency dist
+    let  mut ctr = 0;
+    for (_, b, _) in time_series {
+        price_line.push(b);
+    }
+    let points:i32 = price_line.len() as i32;
+    let samp_freq = 1.0/max_time.0 as f32;
+
+    let  detrended_price = detrend(&price_line);
+    sd_graph(&detrended_price);
+    let  welch: SpectralDensity<f32> = SpectralDensity::<f32>::builder(&detrended_price, samp_freq*512.0).build();
+
+    let power_spec = welch.periodogram();
+
+    let  pwer: Vec<f32> = power_spec.iter().map(|x| x.clone() ).collect();
+
+    for ctr in 0..pwer.len() {
+        time_line.push(format!("{:5.5}",((ctr as f32)*samp_freq)/points as f32));
+    }
+
+    let trace1 = Scatter::new(time_line.clone(), price_line).name("price");
+    // let trace2 = Scatter::new(time_line.clone(), fft_line).name("fft_price").y_axis("y2");
+    let mut plot = Plot::new();
+    plot.add_trace(trace1);
+    // plot.add_trace(trace2);
+
+
+
+    let mut title = String::new();
+    let mut file_name = String::new();
+
+    fmt::write(&mut title, format_args!("{} spectral density Jan 3 2023 #ticks:{}  max per sec:{} @{}",ticker,points,max_time.0,s2hhmmss_32(max_time.1))).unwrap();
+    fmt::write(&mut file_name, format_args!("plots/{}-Spectral_Density.html",ticker)).unwrap();
+    let layout = Layout::new()
+        .height(2200)
+        .width(4200)
+        // .paper_background_color(Rgba::new(20, 11, 5, 0.2))
+        // .plot_background_color(Rgba::new(20, 11, 5, 0.25))
+        .x_axis(
+            Axis::new()
+                .grid_color(Rgba::new(255, 255, 255, 1.0))
+
+                .range_slider(RangeSlider::new().visible(true))
+
+        ).title(Title::new(&title))
+        .y_axis(Axis::new().title("price".into())
+            .grid_color(Rgba::new(255, 255, 255, 0.25))
+            .side(AxisSide::Left)
+            .dtick(0.5)
+        );
+    // .y_axis2(Axis::new().title("fft_amplitude".into())
+    //     .grid_color(Rgba::new(255, 0, 0, 0.25))
+    //     .overlaying("y")
+    //     .side(AxisSide::Right)
+    //
+    // );
+    plot.set_layout(layout);
+    plot.use_local_plotly();
+    println!("writing file {}", &file_name);
+    plot.write_html(&file_name);
+    Ok(())
+}
+
 
 #[cfg(test)]
 mod test {

@@ -37,7 +37,7 @@ use std::f32::consts::PI;
 use welch_sde::{Build, Periodogram, PowerSpectrum, SpectralDensity};
 use std::fmt::Write;
 use rand::{thread_rng, Rng};
-
+use std::time::Instant;
 /// Extracts and separates the elements from a vector of tuples into individual vectors.
 ///
 /// Given a vector of tuples where each tuple contains a `String`, `f32`, and `i32`,
@@ -339,6 +339,38 @@ pub  fn generate_series(max_items: i32) -> Vec<(String, f32, i32)> {
     }
     out
 }
+
+pub  fn  sd_graph(inp:&Vec<f32>){
+
+
+    let  signal:Vec<f64> = inp.iter().map(|x| *x as f64).collect();
+    let fs:f64 = 80.0;
+    let welch: SpectralDensity<f64> =
+        SpectralDensity::<f64>::builder(&signal, fs).build();
+    println!("{}", welch);
+    let now = Instant::now();
+    let sd = welch.periodogram();
+    println!(
+        "Spectral density estimated in {}ms",
+        now.elapsed().as_millis()
+    );
+    let noise_floor = sd.iter().cloned().sum::<f64>() / sd.len() as f64;
+    println!("Noise floor: {:.3}", noise_floor);
+
+    let _: complot::LinLog = (
+        sd.frequency()
+            .into_iter()
+            .zip(&(*sd))
+            .map(|(x, &y)| (x, vec![y])),
+        complot::complot!(
+           "spectral_density.png",
+           xlabel = "Frequency [Hz]",
+           ylabel = "Spectral density [s^2/Hz]"
+       ),
+    )
+        .into();
+}
+
 
 #[cfg(test)]
 mod test {
