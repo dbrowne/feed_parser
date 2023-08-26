@@ -29,21 +29,15 @@
  *
  */
 
-use std::env::set_current_dir;
 use std::error::Error;
 use std::fmt;
-use ndarray::Array;
 use plotly::{
-    color::{NamedColor, Rgb, Rgba},
+    color::{Rgba},
     common::{
-        ColorScale, ColorScalePalette, DashType, Fill, Font, Line, LineShape, Marker, Mode,
-        Orientation, Title,AxisSide
+ Title,AxisSide
     },
-    layout::{Axis, BarMode, Layout, Legend, TicksDirection, TraceOrder,RangeSlider,RangeSelector,
-             SelectorButton,SelectorStep,StepMode},
-    sankey::{Line as SankeyLine, Link, Node},
-    Bar, Plot, Sankey, Scatter, ScatterPolar,
-};
+    layout::{Axis,  Layout, RangeSlider},
+    Plot,  Scatter};
 
 use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
@@ -86,8 +80,7 @@ pub fn test_plot_002(time_series: Vec<(String, f32, i32)>, min_max: (Decimal, De
     plot.add_trace(trace1);
     plot.add_trace(trace2);
 
-    let min_price = min_max.0.to_f32().unwrap();
-    let max_price = min_max.1.to_f32().unwrap();
+
 
     let layout = Layout::new()
          .height(2200)
@@ -134,8 +127,6 @@ pub fn test_plot_003(ticker:&str, time_series: Vec<(String, f32, i32)>, min_max:
     plot.add_trace(trace1);
     plot.add_trace(trace2);
 
-    let min_price = min_max.0.to_f32().unwrap();
-    let max_price = min_max.1.to_f32().unwrap();
 
     let mut title = String::new();
     let mut file_name = String::new();
@@ -235,7 +226,6 @@ pub fn test_power_spec_graph(ticker:&str, time_series: Vec<(String, f32, i32)>, 
 
 
     // max_per_second is the max number of tics per second and will be used to determine the frequency dist
-    let  mut ctr = 0;
     for (_, b, _) in time_series {
         price_line.push(b);
     }
@@ -243,7 +233,7 @@ pub fn test_power_spec_graph(ticker:&str, time_series: Vec<(String, f32, i32)>, 
     let samp_freq = 1.0/max_time.0 as f32;
 
     let  detrended_price = detrend(&price_line);
-    let (pwer, vari)     = power_spectrum(&detrended_price);
+    let (pwer, _)     = power_spectrum(&detrended_price);
 
     for ctr in 0..pwer.len() {
         time_line.push(format!("{:5.5}",((ctr as f32)*samp_freq)/points as f32));
@@ -296,11 +286,10 @@ pub fn test_power_spec_graph(ticker:&str, time_series: Vec<(String, f32, i32)>, 
 pub fn test_spectral_density_graph(ticker:&str, time_series: Vec<(String, f32, i32)>, max_time:(i32, i32)) -> Result<(), Box<dyn Error>> {
     let mut time_line: Vec<String> = Vec::with_capacity(time_series.len());
     let mut price_line: Vec<f32> = Vec::with_capacity(time_series.len());
-    let mut fft_line: Vec<f32> = Vec::with_capacity(time_series.len());
+    let  fft_line: Vec<f32> = Vec::with_capacity(time_series.len());
 
 
     // max_per_second is the max number of tics per second and will be used to determine the frequency dist
-    let  mut ctr = 0;
     for (_, b, _) in time_series {
         price_line.push(b);
     }

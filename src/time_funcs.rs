@@ -33,7 +33,6 @@
 // That's right HH:MM:SS.nnn_nnn_nnn  gotta deal with Nanoseconds
 // Based on Tiany Shi's hhmmss crate https://crates.io/crates/hhmmss
 
-use std::fmt::format;
 use rust_decimal::prelude::*;
 
 const  BILLION: i64 = 1_000_000_000;

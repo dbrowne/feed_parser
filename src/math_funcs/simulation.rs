@@ -29,3 +29,72 @@
  *
  */
 
+extern crate rand;
+
+use rand::Rng;
+use rand::rngs::ThreadRng;
+
+struct StockPriceGenerator{
+    seed: ThreadRng,
+    init_price: f64,
+    end_price: f64,
+    tot_time: f64,
+    mu: f64,
+    sigma: f64,
+    steps: usize,
+}
+
+impl StockPriceGenerator{
+    fn new(init_price: f64, end_price: f64, tot_time: f64, mu: f64, sigma: f64, steps: usize) -> Self{
+        let seed = rand::thread_rng();
+        StockPriceGenerator{
+            seed,
+            init_price,
+            end_price,
+            tot_time,
+            mu,
+            sigma,
+            steps,
+        }
+    }
+
+    pub fn generate(&mut self) -> Vec<f64> {
+        let mut price_path = Vec::with_capacity(self.steps);
+        let dt = self.tot_time / self.steps as f64;
+        let mut s = self.init_price;
+
+        for _ in 0..self.steps {
+            let z: f64 = self.seed.sample(rand_distr::StandardNormal);
+            s *= 1.0 + self.mu * dt + self.sigma * z * (dt.sqrt());
+            price_path.push(s);
+        }
+
+        price_path
+    }
+
+    pub  fn generate_intra(&mut self) ->Vec<f64> {
+        let  mut price_path = Vec::with_capacity(self.steps);
+        let  dt = self.tot_time / self.steps as f64;
+        let  mut s = self.init_price;
+        for _ in 0..self.steps{
+            let z :f64 = self.seed.sample(rand_distr::StandardNormal);
+            s *= 1.0 + self.mu * dt + self.sigma * z * (dt.sqrt());
+            price_path.push(s);
+        }
+        price_path
+    }
+}
+
+#[cfg(test)]
+mod  test{
+    use crate::math_funcs::simulation::StockPriceGenerator;
+
+    #[test]
+    fn t_001(){
+        let  mut gen = StockPriceGenerator::new(100.0, 105.25, 1.0, 0.2, 0.1, 100);
+        println!("{:?}", gen.generate());
+
+        println!("{:?}", gen.generate_intra());
+
+    }
+}

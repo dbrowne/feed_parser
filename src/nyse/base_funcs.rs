@@ -35,7 +35,7 @@
 use std::collections::HashMap;
 use std::error::Error;
 use crate::nyse::mt220::T220;
-use crate::time_funcs::{time_dec_string, time_to_dec};
+use crate::time_funcs::time_to_dec;
 use priority_queue::PriorityQueue;
 use crate::event_structs::EventList;
 

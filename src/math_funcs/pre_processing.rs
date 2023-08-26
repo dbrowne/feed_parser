@@ -34,7 +34,7 @@ use approx;
 // For the macro relative_eq!
 use rustfft::{FftPlanner, num_complex::Complex};
 use std::f32::consts::PI;
-use welch_sde::{Build, Periodogram, PowerSpectrum, SpectralDensity};
+use welch_sde::{Build, PowerSpectrum, SpectralDensity};
 use std::fmt::Write;
 use rand::{thread_rng, Rng};
 use std::time::Instant;
@@ -242,10 +242,10 @@ pub fn gen_fft(inp: &Vec<f32>) -> Vec<f32> {
 ///
 /// The first and second elements of each tuple in the input vector are ignored in the FFT computation.
 ///
-pub fn fft_wrapper(inp: &Vec<(String, f32, f32)>) -> Vec<(f32)> {
+pub fn fft_wrapper(inp: &Vec<(String, f32, f32)>) -> Vec<f32> {
     let mut out: Vec<(String, f32, f32)> = Vec::with_capacity(inp.len());
     let data: Vec<f32> = inp.iter().map(|x| x.2).collect();
-    let mut fft_data = gen_fft(&data);
+    let fft_data = gen_fft(&data);
     fft_data
 }
 
@@ -374,7 +374,6 @@ pub  fn  sd_graph(inp:&Vec<f32>){
 
 #[cfg(test)]
 mod test {
-    use std::arch::x86_64::__cpuid;
     use approx::assert_relative_eq;
     use crate::math_funcs::pre_processing::*;
 
@@ -442,7 +441,6 @@ mod test {
         let detrended_data = detrend(&floats);
         let out = power_spectrum(&detrended_data);
         let  p = out.0;
-        let  v = out.1;
         assert_eq!(p.len(), 128);
     }
 
@@ -453,8 +451,7 @@ mod test {
         let detrended_data = detrend(&floats);
         let out = spectral_density(&detrended_data);
         let  p = out.0;
-        let  v = out.1;
-        assert_eq!(128,p.len() );;
+        assert_eq!(128,p.len() );
     }
 
 

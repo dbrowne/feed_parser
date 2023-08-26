@@ -44,17 +44,49 @@ use walkdir::WalkDir;
 use feed_parser::graphics::test_plot1::{test_plot_003, test_plot_004, test_power_spec_graph, test_spectral_density_graph};
 use feed_parser::math_funcs::pre_processing::gen_price_with_fft;
 use indicatif::ProgressBar;
+use feed_parser::general::parsing;
+
+
 fn main() {
     dotenv().ok();
     let data_dir = env::var("NYSE_TRADE_DATA_DIR").expect("No Data file found!");
     for file in WalkDir::new(data_dir).into_iter().filter_map(|file| file.ok()) {
         if file.file_type().is_file() {
-            process_file(file.path().display().to_string());
+            proc_dta(file.path().display().to_string());
             println!("\n\n-----------------------------------\n\n");
         }
     }
 }
 
+
+fn proc_dta(input_file: String) {
+    let start = Instant::now();
+    if let Ok(mut dta) = parsing::proc_file(&input_file) {
+        dump_stats(&mut dta);
+        let duration = start.elapsed();
+    }
+}
+
+fn dump_stats(stats: &mut Stats) {
+    println!("Symbol Index Mapping Messages {}", stats.msg_stats.msg_count[&NYSEMsg::T003].separate_with_commas());
+    println!("Symbol Security Status Message {}", stats.msg_stats.msg_count[&NYSEMsg::T034].separate_with_commas());
+    println!("Trade Messages {}", stats.msg_stats.msg_count[&NYSEMsg::T220].separate_with_commas());
+    println!("Trade Message details: Number of symbols {}", stats.trade_stats.get_symbol_count().separate_with_commas());
+    println!("Trade Message details: Trade Volume {}", stats.trade_stats.get_total_volume().separate_with_commas());
+    println!("Trade Message details: average_rate {}/second ", stats.trade_stats.get_average_rate().separate_with_commas());
+    println!("50 Most Active Symbols: {:?} ", stats.symbol_stats.get_most_active());
+    println!("50 Highest Volume Symbols: {:?} ", stats.symbol_stats.get_highest_volume());
+    // println!("{} Activity: {:?}","TSLA",stats.event_stats.symbol_events.get("TSLA").unwrap().get_full_time_series());
+
+    for (symbol, _) in stats.symbol_stats.get_most_active() {
+        let event_list = stats.event_stats.symbol_events.get(&symbol).unwrap();
+        _ = test_plot_003(&symbol, event_list.get_full_time_series_s(), event_list.get_min_max_price_volume());
+        let fft_prices = gen_price_with_fft(&event_list.get_full_time_series_s());
+        _ = test_plot_004(&symbol, fft_prices, event_list.get_min_max_price_volume());
+        _ = test_power_spec_graph(&symbol, event_list.get_full_time_series_s(), event_list.get_max_tic_per_second());
+        _ = test_spectral_density_graph(&symbol, event_list.get_full_time_series_s(), event_list.get_max_tic_per_second());
+    }
+}
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
     where P: AsRef<Path>, {
@@ -63,96 +95,8 @@ fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
 }
 
 
-fn process_file(data_file: String) {
-    let start = Instant::now();
-    println!("Processing file {}", data_file);
-    let  bar = ProgressBar::new(4_800_000);
-    let mut stats = Stats::new();
-    let mut ctr = 0;
-    if let Ok(lines) = read_lines(data_file) {
-        for line in lines {
-            if let Ok(ip) = line {
-                ctr += 1;
-                let msg_type = process_line(ip, &mut stats);
-                match msg_type {
-                    Ok(()) => (),
-                    Err(e) => {
-                        println!("error processing line :{}", ctr);
-                        println!("error: {}", e);
-                        bar.finish_with_message("failed");
-                        exit(1);
-                    }
-                }
-                bar.inc(1);
-            }
-        }
-    }
-
-    let duration = start.elapsed();
-    println!("Processed {} records in {} seconds", ctr.separate_with_commas(), duration.as_secs().separate_with_commas());
-    println!("Symbol Index Mapping Messages {}", stats.msg_stats.msg_count[&NYSEMsg::T003].separate_with_commas());
-    println!("Symbol Security Status Message {}", stats.msg_stats.msg_count[&NYSEMsg::T034].separate_with_commas());
-    println!("Trade Messages {}", stats.msg_stats.msg_count[&NYSEMsg::T220].separate_with_commas());
-    println!("Trade Message details: Number of symbols {}", stats.trade_stats.get_symbol_count().separate_with_commas());
-    println!("Trade Message details: Trade Volume {}", stats.trade_stats.get_total_volume().separate_with_commas());
-    println!("Trade Message details: average_rate {}/second ", stats.trade_stats.get_average_rate().separate_with_commas());
-    println!("50 Most Active Symbols: {:?} ",stats.symbol_stats.get_most_active());
-    println!("50 Highest Volume Symbols: {:?} ",stats.symbol_stats.get_highest_volume());
-    // println!("{} Activity: {:?}","TSLA",stats.event_stats.symbol_events.get("TSLA").unwrap().get_full_time_series());
-
-    for (symbol,_) in stats.symbol_stats.get_most_active(){
-        let  event_list = stats.event_stats.symbol_events.get(&symbol).unwrap();
-        _= test_plot_003(&symbol, event_list.get_full_time_series_s(),event_list.get_min_max_price_volume());
-        let  fft_prices = gen_price_with_fft(&event_list.get_full_time_series_s());
-        _= test_plot_004(&symbol, fft_prices, event_list.get_min_max_price_volume());
-        _= test_power_spec_graph(&symbol, event_list.get_full_time_series_s(), event_list.get_max_tic_per_second());
-        _= test_spectral_density_graph(&symbol, event_list.get_full_time_series_s(), event_list.get_max_tic_per_second());
-    }
-    bar.finish_with_message("done");
-
-}
 
 
-fn process_line(line: String, stats: &mut Stats) -> Result<(), Box<dyn Error>> {
-    //todo!(Need some error handling here)
-    let toks: Vec<String> = line.split(',')
-        .map(|s| s.to_string())
-        .collect();
 
-    let msg_type = NYSEMsg::get(&toks[0]);
 
-    stats.msg_stats.add(msg_type);
-
-    match msg_type {
-      NYSEMsg::T034 => {
-            Ok(())
-        }
-        NYSEMsg::T003 => {
-            let  symbol = &toks[2];
-            stats.event_stats.init(&symbol.clone());
-            Ok(stats.symbol_stats.add(&symbol))
-        }
-        NYSEMsg::T220 => {
-            match T220::new(toks) {
-                Ok(trade) => {
-                    if  trade.trade_cond4 == Tc4::OOpenPrice || trade.trade_cond4==Tc4::OClosePrice{
-                        return std::result::Result::Ok(());
-                    }
-                    if  trade.trade_cond2 == Tc2::MCCT || trade.trade_cond2==Tc2::MCO{
-                        return std::result::Result::Ok(());
-                    }
-                    _= stats.trade_stats.add(&trade);
-                    stats.event_stats.update(&trade.symbol, &trade.source_time, &trade.price, trade.volume)?;
-                    Ok(stats.symbol_stats.update(&trade.symbol, trade.volume))// todo! need to fix this
-                }
-                Err(e) => {
-                    Err(e)
-                }
-            }
-        }
-        NYSEMsg::ERROR => {
-            Err("Unknown message type".into())
-        }
-    }
-}
 
