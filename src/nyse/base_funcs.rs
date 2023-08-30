@@ -220,7 +220,7 @@ impl SymbolStats {
         self.highest_volume.change_priority(&symbol.to_string(), *active_volume);
     }
 
-    pub fn get_most_active(&mut self) -> Vec<(String, i32)> {
+    pub fn get_most_active(&mut self,max_items:i32) -> Vec<(String, i32)> {
         let mut symbols: Vec<(String, i32)> = Vec::new();
         let mut ctr = 0;
         let  mut cloned_active = self.most_active.clone();
@@ -229,14 +229,14 @@ impl SymbolStats {
             let (symbol, volume) = cloned_active.pop().unwrap();
             symbols.push((symbol.clone(), volume.clone()));
             ctr += 1;
-            if ctr > 50 {
+            if ctr > max_items {
                 break;
             }
         }
         symbols
     }
 
-    pub fn get_highest_volume(&mut self) -> Vec<(String, i32)> {
+    pub fn get_highest_volume(&mut self,max_items:i32) -> Vec<(String, i32)> {
         let mut symbols: Vec<(String, i32)> = Vec::new();
         let mut ctr = 0;
         let  mut cloned_volume = self.highest_volume.clone();
@@ -244,7 +244,7 @@ impl SymbolStats {
             let (symbol, volume) = cloned_volume.pop().unwrap();
             symbols.push((symbol.clone(), volume.clone()));
             ctr += 1;
-            if ctr > 50 {
+            if ctr > max_items {
                 break;
             }
         }
@@ -409,7 +409,7 @@ mod test {
         stats.update("IBM", 10);
         stats.update("IBM", 10);
 
-        assert_eq!(stats.get_highest_volume()[0], ("AAPL".to_string(), 4000));
+        assert_eq!(stats.get_highest_volume(10)[0], ("AAPL".to_string(), 4000));
     }
 
     #[test]
@@ -428,6 +428,6 @@ mod test {
         stats.update("IBM", 10);
         stats.update("IBM", 10);
         stats.update("IBM", 10);
-        assert_eq!(stats.get_most_active()[0], ("IBM".to_string(), 7));
+        assert_eq!(stats.get_most_active(10)[0], ("IBM".to_string(), 7));
     }
 }

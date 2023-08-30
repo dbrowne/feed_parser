@@ -31,6 +31,32 @@
 
 
 use  dotenvy::dotenv;
-use std::{env,io};
+use std::{env};
+use walkdir::WalkDir;
+use feed_parser::general::parsing;
+use feed_parser::math_funcs;
+use feed_parser::nyse::base_funcs::Stats;
+use math_funcs::simulation::StockPriceGenerator;
 
-fn main() {}
+fn main() {
+
+    dotenv().ok();
+    let data_dir = env::var("NYSE_TRADE_DATA_DIR").expect("No Data file found!");
+    for file in WalkDir::new(data_dir).into_iter().filter_map(|file| file.ok()) {
+        if file.file_type().is_file() {
+            proc_dta(file.path().display().to_string());
+            println!("\n\n-----------------------------------\n\n");
+        }
+    }
+}
+
+fn proc_dta(data_file: String) {
+    println!("Processing file: {}", data_file);
+    if let Ok(mut dta) = parsing::proc_file(&data_file) {
+        let  mut new_stats = Stats::new();
+        for  in  {
+            
+        }
+
+    }
+}

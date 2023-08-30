@@ -43,7 +43,6 @@ use std::time::Instant;
 use walkdir::WalkDir;
 use feed_parser::graphics::test_plot1::{test_plot_003, test_plot_004, test_power_spec_graph, test_spectral_density_graph};
 use feed_parser::math_funcs::pre_processing::gen_price_with_fft;
-use indicatif::ProgressBar;
 use feed_parser::general::parsing;
 
 
@@ -74,8 +73,8 @@ fn dump_stats(stats: &mut Stats) {
     println!("Trade Message details: Number of symbols {}", stats.trade_stats.get_symbol_count().separate_with_commas());
     println!("Trade Message details: Trade Volume {}", stats.trade_stats.get_total_volume().separate_with_commas());
     println!("Trade Message details: average_rate {}/second ", stats.trade_stats.get_average_rate().separate_with_commas());
-    println!("50 Most Active Symbols: {:?} ", stats.symbol_stats.get_most_active());
-    println!("50 Highest Volume Symbols: {:?} ", stats.symbol_stats.get_highest_volume());
+    println!("50 Most Active Symbols: {:?} ", stats.symbol_stats.get_most_active(50));
+    println!("50 Highest Volume Symbols: {:?} ", stats.symbol_stats.get_highest_volume(50));
     // println!("{} Activity: {:?}","TSLA",stats.event_stats.symbol_events.get("TSLA").unwrap().get_full_time_series());
 
     for (symbol, _) in stats.symbol_stats.get_most_active() {
