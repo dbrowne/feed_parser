@@ -77,7 +77,7 @@ fn dump_stats(stats: &mut Stats) {
     println!("50 Highest Volume Symbols: {:?} ", stats.symbol_stats.get_highest_volume(50));
     // println!("{} Activity: {:?}","TSLA",stats.event_stats.symbol_events.get("TSLA").unwrap().get_full_time_series());
 
-    for (symbol, _) in stats.symbol_stats.get_most_active() {
+    for (symbol, _) in stats.symbol_stats.get_most_active(50) {
         let event_list = stats.event_stats.symbol_events.get(&symbol).unwrap();
         _ = test_plot_003(&symbol, event_list.get_full_time_series_s(), event_list.get_min_max_price_volume());
         let fft_prices = gen_price_with_fft(&event_list.get_full_time_series_s());
