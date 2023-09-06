@@ -37,6 +37,7 @@ use std::collections::BTreeMap;
 use rust_decimal::prelude::*;
 use rust_decimal_macros::dec;
 use std::error::Error;
+use std::ops::Mul;
 use crate::time_funcs::{decimal2hhmmssnnn, time_dec_string};
 use crate::time_funcs::s2hhmmss_32;
 
@@ -204,7 +205,22 @@ impl EventList {
         time_series
     }
 
-    pub fn get_time_series(&self, step: i32) -> Vec<(Decimal, Decimal, i32)> {
+    pub  fn get_integer_time_series(&self) ->Vec<(String,i32, i32)>{
+        let  mut time_series:Vec<(String,i32,i32)> = Vec::with_capacity(self.get_event_count());
+
+        for  (_,event) in self.events.iter() {
+            for tic in event.tics.iter() {
+                let  i_price:i32 = tic.price.mul(Decimal::new(100,0) ).to_i32().unwrap();
+
+                time_series.push((decimal2hhmmssnnn(tic.seconds),i_price, tic.volume));
+            }
+
+        }
+
+        time_series
+    }
+
+    pub fn  get_time_series(&self, step: i32) -> Vec<(Decimal, Decimal, i32)> {
         let events_count = self.get_event_count();
         let capacity = events_count / step as usize;
         let mut time_series: Vec<(Decimal, Decimal, i32)> = Vec::with_capacity(capacity);
@@ -397,6 +413,34 @@ mod test {
         assert_eq!(el.get_time_series(1), ans);
     }
 
+
+    #[test]
+    fn test_get_int_time_series4() {
+        let mut el = EventList::new();
+        let _ = el.update("09:20:00.491720704", "6.01", 1);
+        let _ = el.update("09:20:00.491720705", "12.59", 2);
+        let _ = el.update("09:20:00.491730704", "11.37", 3);
+        let _ = el.update("09:21:00.491730707", "11.38", 4);
+        let _ = el.update("09:21:02.491720704", "6.0", 5);
+        let _ = el.update("09:21:02.491720705", "12.25", 6);
+        let _ = el.update("09:21:04.491730704", "11.37", 7);
+        let _ = el.update("09:21:05.491730707", "11.38", 8);
+        let _ = el.update("09:22:05.491730708", "11.39", 9);
+        let _ = el.update("09:23:05.491730709", "11.36", 10);
+
+        let ans: Vec<(String, i32, i32)> = vec![
+        ("09:20:00.491720704".to_string(), 601, 1),
+        ("09:20:00.491720705".to_string(), 1259, 2),
+        ("09:20:00.491730704".to_string(), 1137, 3),
+        ("09:21:00.491730707".to_string(), 1138, 4),
+        ("09:21:02.491720704".to_string(), 600, 5),
+        ("09:21:02.491720705".to_string(), 1225, 6),
+        ("09:21:04.491730704".to_string(), 1137, 7),
+        ("09:21:05.491730707".to_string(), 1138, 8),
+        ("09:22:05.491730708".to_string(), 1139, 9),
+        ("09:23:05.491730709".to_string(), 1136, 10)];
+        assert_eq!(el.get_integer_time_series(), ans);
+    }
     #[test]
     fn test_get_max_tics_per_second() {
         let mut el = EventList::new();

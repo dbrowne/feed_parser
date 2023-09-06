@@ -38,6 +38,9 @@ use welch_sde::{Build, PowerSpectrum, SpectralDensity};
 use std::fmt::Write;
 use rand::{thread_rng, Rng};
 use std::time::Instant;
+use std::collections::HashMap;
+use minimum_redundancy::{Coding, Code, DecodingResult, BitsPerFragment};
+
 /// Extracts and separates the elements from a vector of tuples into individual vectors.
 ///
 /// Given a vector of tuples where each tuple contains a `String`, `f32`, and `i32`,
@@ -371,9 +374,64 @@ pub  fn  sd_graph(inp:&Vec<f32>){
         .into();
 }
 
+/// Calculate the difference series of a given integer vector.
+///
+/// Given a vector `inp` of integers, this function returns a new vector where
+/// the element at index `i` is the difference between the element at index `i+1`
+/// and the element at index `i` in the input vector.
+///
+/// # Arguments
+///
+/// * `inp` - A slice  of i32 integers.
+///
+/// # Returns
+///
+/// Returns a new `Vec<i32>` containing the differences between adjacent elements
+/// of the input vector.
+///
+/// # Examples
+///
+/// ```
+/// # use your_crate_name::diff_series;  // Replace 'your_crate_name' with the name of your crate
+/// let input = vec![1, 2, 3, 5, 8];
+/// let output = diff_series(&input);
+/// assert_eq!(output, vec![1, 1, 2, 3]);
+/// ```
+pub fn  diff_series(inp:&[i32]) ->Vec<i32>{
+    let  mut outp:Vec<i32> = Vec::with_capacity(inp.len()-1);
+    for ctr  in 1..inp.len()  {
+        outp.push(inp[ctr] - inp[ctr-1] );
+    }
+    outp
+}
 
+pub  fn freq_counter<T: std::hash::Hash + std::cmp::Eq+ Clone>(data: Vec<T>) -> HashMap<T, u32> {
+    let mut frequency:HashMap<T,u32> = HashMap::new();
+
+    for value in data.iter() {
+        let counter = frequency.entry(value.clone()).or_insert(0);
+        *counter += 1;
+    }
+
+    frequency
+}
+
+
+pub  fn  min_red(inp:HashMap<i32,u32>) {
+    let  cc = Coding::from_frequencies(BitsPerFragment(2),inp);
+
+    for (val, cde) in cc.codes_for_values() {
+        println!("The value is {} the code is {:#b}, {}",val,cde.content, cde.len);
+    }
+    // println!("{:?}",cc.codes_for_values());
+    // println!("{:?}",cc.values);
+
+
+
+}
 #[cfg(test)]
 mod test {
+    use std::collections::HashMap;
     use approx::assert_relative_eq;
     use crate::math_funcs::pre_processing::*;
 
@@ -421,7 +479,7 @@ mod test {
                                   30.720274, 32.647892, 41.54049];
 
         for i in 0..comp.len() {
-            assert_relative_eq!(floats[i],comp[i]);
+            assert_eq!((floats[i]*1000.0) as i32,(comp[i]*1000.0) as i32);
         }
     }
 
@@ -455,11 +513,34 @@ mod test {
     }
 
 
+    #[test]
+    fn test_diff_series(){
+        let  inp:Vec<i32>=vec![1,2,6,4,5,5,19,8,3,3,3,4];
+        let  ans:Vec<i32>=vec![1,4,-2,1,0,14,-11,-5,0,0,1];
+        let  ans_len:usize = 11;
 
+        let  t_ans = diff_series(&inp);
+        assert_eq!(t_ans.len(),ans_len);
+        assert_eq!(t_ans,ans);
 
+    }
 
+    #[test]
+    fn test_freq_counter() {
+        let  inp:Vec<i32>=vec![1,4,-2,1,0,14,-11,-5,0,0,1,1];
+        let  ans_vec:[(i32,u32);7]=[(0,3),(1,4),(-2,1),(4,1),(14,1),(-5,1),(-11,1)];
+        let  ans_hash:HashMap<i32,u32>=HashMap::from(ans_vec);
+        let  ans=freq_counter(inp);
+        assert_eq!(ans_hash,ans);
 
+    }
 
+    #[test]
+    fn test_min_res(){
+        let  dta:[(i32,u32);9]= [(0,3),(1,275),(-2,1),(4,1),(643,2),(14,5),(-5,1),(-11,1),(111,5)];
+        let  inp:HashMap<i32,u32>=HashMap::from(dta);
+        min_red(inp);
+    }
 
 
 

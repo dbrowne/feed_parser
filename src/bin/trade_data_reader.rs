@@ -40,10 +40,12 @@ use feed_parser::nyse::mt220::{T220, Tc2, Tc4};
 use feed_parser::nyse::base_funcs::{NYSEMsg, Stats};
 use thousands::Separable;
 use std::time::Instant;
+use plotly::common::Dim::Vector;
 use walkdir::WalkDir;
 use feed_parser::graphics::test_plot1::{test_plot_003, test_plot_004, test_power_spec_graph, test_spectral_density_graph};
-use feed_parser::math_funcs::pre_processing::gen_price_with_fft;
+use feed_parser::math_funcs::pre_processing::{diff_series, freq_counter, gen_price_with_fft, min_red};
 use feed_parser::general::parsing;
+use feed_parser::event_structs::EventList;
 
 
 fn main() {
@@ -75,6 +77,7 @@ fn dump_stats(stats: &mut Stats) {
     println!("Trade Message details: average_rate {}/second ", stats.trade_stats.get_average_rate().separate_with_commas());
     println!("50 Most Active Symbols: {:?} ", stats.symbol_stats.get_most_active(50));
     println!("50 Highest Volume Symbols: {:?} ", stats.symbol_stats.get_highest_volume(50));
+
     // println!("{} Activity: {:?}","TSLA",stats.event_stats.symbol_events.get("TSLA").unwrap().get_full_time_series());
 
     for (symbol, _) in stats.symbol_stats.get_most_active(50) {
@@ -84,9 +87,23 @@ fn dump_stats(stats: &mut Stats) {
         _ = test_plot_004(&symbol, fft_prices, event_list.get_min_max_price_volume());
         _ = test_power_spec_graph(&symbol, event_list.get_full_time_series_s(), event_list.get_max_tic_per_second());
         _ = test_spectral_density_graph(&symbol, event_list.get_full_time_series_s(), event_list.get_max_tic_per_second());
+        extra_stats(event_list);
     }
 }
 
+fn  extra_stats(event_l:&EventList){
+    let  int_series = event_l.get_integer_time_series();
+
+    let  mut price_vec:Vec<i32> = Vec::with_capacity(int_series.len());
+    for (_,price,_)  in int_series  {
+        price_vec.push(price);
+
+    }
+    let  diffs:Vec<i32>=diff_series(&price_vec);
+    let  freqs = freq_counter(diffs);
+    println!("frequencies {freqs:?}");
+    min_red(freqs);
+}
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
     where P: AsRef<Path>, {
     let file = File::open(filename)?;
