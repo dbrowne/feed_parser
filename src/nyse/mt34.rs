@@ -34,7 +34,7 @@
 // Based on https://www.nyse.com/publicdocs/nyse/data/TAQ_Pillar_Products_Client_Spec_v2.3i.pdf
 
 
-
+#[allow(dead_code)]    //will be implemented in the future
 pub struct T34 {
     // Security Status Message
     pub msg_type: u8,
@@ -56,7 +56,7 @@ pub struct T34 {
 
 
 
-
+#[allow(dead_code)]    //will be implemented in the future
 #[derive(PartialEq, Debug)]
 pub enum SSRTexID {
     // spec maps C top both NSX and NYSE on pag 16 Dropping NSX
@@ -111,7 +111,7 @@ impl SSRTexID {
 
 
 
-
+#[allow(dead_code)]    //will be implemented in the future
 #[derive(PartialEq, Debug)]
 pub enum SecurityStatus {
     // Trading Halt
@@ -166,6 +166,7 @@ impl SecurityStatus {
 
 
 
+#[allow(dead_code)]   //unused for now but part of the spec
 #[derive(PartialEq, Debug)]
 pub enum HaltCondition {
     // • '~' - Security not delayed/halted
@@ -231,7 +232,7 @@ impl HaltCondition {
 }
 
 
-
+#[allow(dead_code)]    //will be implemented in the future
 #[derive(PartialEq, Debug)]
 pub  enum SSRState {
     // ‘~’ – No Short Sale in Effect
@@ -253,7 +254,7 @@ impl SSRState {
 }
 
 
-
+#[allow(dead_code)]    //will be implemented in the future
 #[derive(PartialEq, Debug)]
 pub enum MarketState {
     // ‘P’ – Pre-opening

@@ -31,22 +31,18 @@
 
 use dotenvy::dotenv;
 use std::{env, io};
-use std::error::Error;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufRead;
 use std::path::Path;
-use std::process::exit;
-use feed_parser::nyse::mt220::{T220, Tc2, Tc4};
 use feed_parser::nyse::base_funcs::{NYSEMsg, Stats};
 use thousands::Separable;
-use std::time::Instant;
-use plotly::common::Dim::Vector;
+use priority_queue::DoublePriorityQueue;
 use walkdir::WalkDir;
 use feed_parser::graphics::test_plot1::{test_plot_003, test_plot_004, test_power_spec_graph, test_spectral_density_graph};
-use feed_parser::math_funcs::pre_processing::{diff_series, freq_counter, gen_price_with_fft, min_red};
+use feed_parser::math_funcs::pre_processing::{diff_series, freq_counter, gen_price_with_fft, huff_code};
 use feed_parser::general::parsing;
 use feed_parser::event_structs::EventList;
-
 
 fn main() {
     dotenv().ok();
@@ -61,10 +57,10 @@ fn main() {
 
 
 fn proc_dta(input_file: String) {
-    let start = Instant::now();
     if let Ok(mut dta) = parsing::proc_file(&input_file) {
+        evaluate_trades(&mut dta);
         dump_stats(&mut dta);
-        let duration = start.elapsed();
+
     }
 }
 
@@ -75,7 +71,7 @@ fn dump_stats(stats: &mut Stats) {
     println!("Trade Message details: Number of symbols {}", stats.trade_stats.get_symbol_count().separate_with_commas());
     println!("Trade Message details: Trade Volume {}", stats.trade_stats.get_total_volume().separate_with_commas());
     println!("Trade Message details: average_rate {}/second ", stats.trade_stats.get_average_rate().separate_with_commas());
-    println!("50 Most Active Symbols: {:?} ", stats.symbol_stats.get_most_active(50));
+    println!("50 Most Active Symbols: {:?} ", stats.symbol_stats.get_most_active(50)); //wish this was not mutable
     println!("50 Highest Volume Symbols: {:?} ", stats.symbol_stats.get_highest_volume(50));
 
     // println!("{} Activity: {:?}","TSLA",stats.event_stats.symbol_events.get("TSLA").unwrap().get_full_time_series());
@@ -88,9 +84,51 @@ fn dump_stats(stats: &mut Stats) {
         _ = test_power_spec_graph(&symbol, event_list.get_full_time_series_s(), event_list.get_max_tic_per_second());
         _ = test_spectral_density_graph(&symbol, event_list.get_full_time_series_s(), event_list.get_max_tic_per_second());
         extra_stats(event_list);
+
     }
 }
 
+fn  evaluate_trades(stats: &Stats){
+    let  mut greatest_p_variance:DoublePriorityQueue<String, i32> = DoublePriorityQueue::new();
+    let  mut freq_map:HashMap<String,HashMap<i32,u32>>= HashMap::new();
+
+    for (symbol, event_list) in stats.event_stats.symbol_events.iter() {
+        let  time_series = event_list.get_integer_time_series();
+        let  pric_series = get_prices(time_series);
+        if  pric_series.len() <3 {
+            continue;
+        }
+        let diff_ser = diff_series(&pric_series);
+        let freqs = freq_counter(diff_ser);
+        let freq_size = freqs.keys().len() as i32;
+        freq_map.insert(symbol.clone(), freqs);
+        greatest_p_variance.push(symbol.clone(), freq_size);
+    }
+
+    loop{
+
+
+        if let  Some((tkr,cnt)) = greatest_p_variance.pop_max() {
+            println!("max variance for {} {}", tkr, cnt);
+        }else{
+            break;
+        }
+    }
+
+
+
+}
+
+
+fn  get_prices(inp:Vec<(String, i32,i32)>) ->Vec<i32>{
+    let  mut outv:Vec<i32> = Vec::with_capacity(inp.len());
+
+    for (_,p,_ )in inp  {
+        outv.push(p.clone());
+    }
+
+    outv
+}
 fn  extra_stats(event_l:&EventList){
     let  int_series = event_l.get_integer_time_series();
 
@@ -101,8 +139,8 @@ fn  extra_stats(event_l:&EventList){
     }
     let  diffs:Vec<i32>=diff_series(&price_vec);
     let  freqs = freq_counter(diffs);
-    println!("frequencies {freqs:?}");
-    min_red(freqs);
+    // println!("frequencies {freqs:?}");
+    huff_code(freqs);
 }
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
     where P: AsRef<Path>, {

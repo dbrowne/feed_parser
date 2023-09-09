@@ -30,7 +30,6 @@
  */
 
 use indicatif::ProgressBar;
-use instant::Instant;
 use std::io::{self,BufRead};
 use crate::nyse::mt220::{T220, Tc2, Tc4};
 use crate::nyse::base_funcs::{NYSEMsg, Stats};
@@ -42,21 +41,49 @@ use std::error::Error;
 const MSG_IDX: usize = 0;
 const SYMBOL_IDX: usize = 2;
 
+/// Reads the lines of a given file.
+///
+/// This function will open the file with the given filename and return an iterator
+/// over the lines of the file. Each line is of type `Result<String, io::Error>`,
+/// meaning it might contain an error if reading the line fails.
+///
+/// # Type Parameters
+///
+/// * `P`: A type which can be converted into a reference to a `Path`. This allows
+///   for flexibility in the types of values that can be passed as the `filename`.
+///
+/// # Parameters
+///
+/// * `filename`: The path to the file to be read. This can be any type that implements
+///   the `AsRef<Path>` trait, such as a string slice or a `PathBuf`.
+///
+/// # Returns
+///
+/// A result containing an iterator over the lines in the file. If an error occurs
+/// (e.g., the file cannot be opened), an `io::Error` is returned.
+///
+/// # Examples
+///
+/// ```
+/// let lines = read_lines("path/to/file.txt")?;
+/// for line in lines {
+///     println!("{}", line?);
+/// }
+/// ```
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
     where P: AsRef<Path>, {
     let file = File::open(filename)?;
     Ok(io::BufReader::new(file).lines())
 }
 pub fn proc_file(data_file: &str) -> Result<Stats, Box<dyn std::error::Error>> {
-    let start: Instant = Instant::now();
     println!("Processing file: {}", data_file);
     let bar: ProgressBar = ProgressBar::new(5_000_000);
     let mut stats: Stats = Stats::new();
-    let mut ctr: i32 = 0;
+
     if let Ok(lines) = read_lines(data_file) {
         for line in lines {
             if let Ok(msg) = line {
-                ctr += 1;
+
                 let msg_type = process_line(msg, &mut stats);
                 match msg_type {
                     Ok(()) => (),

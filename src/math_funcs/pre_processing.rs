@@ -30,16 +30,13 @@
  */
 //
 #[macro_use]
-use approx;
 // For the macro relative_eq!
 use rustfft::{FftPlanner, num_complex::Complex};
 use std::f32::consts::PI;
 use welch_sde::{Build, PowerSpectrum, SpectralDensity};
 use std::fmt::Write;
 use rand::{thread_rng, Rng};
-use std::time::Instant;
 use std::collections::HashMap;
-use minimum_redundancy::{Coding, Code, DecodingResult, BitsPerFragment};
 
 /// Extracts and separates the elements from a vector of tuples into individual vectors.
 ///
@@ -169,7 +166,7 @@ pub fn detrend(inp: &Vec<f32>) -> Vec<f32> {
 pub fn variance(inp: &Vec<f32>) -> f64 {
     let n = inp.len() as f32;
     let mean = inp.iter().sum::<f32>() / n;
-    let mut sum: f64 = inp.iter().map(|x| (x - mean).powi(2) as f64).sum();
+    let sum: f64 = inp.iter().map(|x| (x - mean).powi(2) as f64).sum();
 
     sum / n as f64
 }
@@ -246,7 +243,6 @@ pub fn gen_fft(inp: &Vec<f32>) -> Vec<f32> {
 /// The first and second elements of each tuple in the input vector are ignored in the FFT computation.
 ///
 pub fn fft_wrapper(inp: &Vec<(String, f32, f32)>) -> Vec<f32> {
-    let mut out: Vec<(String, f32, f32)> = Vec::with_capacity(inp.len());
     let data: Vec<f32> = inp.iter().map(|x| x.2).collect();
     let fft_data = gen_fft(&data);
     fft_data
@@ -254,7 +250,6 @@ pub fn fft_wrapper(inp: &Vec<(String, f32, f32)>) -> Vec<f32> {
 
 
 pub fn gen_price_with_fft(inp: &Vec<(String, f32, i32)>) -> Vec<(String, f32, f32)> {
-    let mut out: Vec<(String, f32, f32)> = Vec::with_capacity(inp.len());
     let (_, floats, _) = extract_elements(inp);
     let detrended_data = detrend(&floats);
     let fft_data = gen_fft(&detrended_data);
@@ -346,19 +341,19 @@ pub  fn generate_series(max_items: i32) -> Vec<(String, f32, i32)> {
 pub  fn  sd_graph(inp:&Vec<f32>){
 
 
+
     let  signal:Vec<f64> = inp.iter().map(|x| *x as f64).collect();
     let fs:f64 = 80.0;
     let welch: SpectralDensity<f64> =
         SpectralDensity::<f64>::builder(&signal, fs).build();
-    println!("{}", welch);
-    let now = Instant::now();
+    // println!("{}", welch);
     let sd = welch.periodogram();
-    println!(
-        "Spectral density estimated in {}ms",
-        now.elapsed().as_millis()
-    );
-    let noise_floor = sd.iter().cloned().sum::<f64>() / sd.len() as f64;
-    println!("Noise floor: {:.3}", noise_floor);
+    // println!(
+    //     "Spectral density estimated in {}ms",
+    //     now.elapsed().as_millis()
+    // );
+    // let noise_floor = sd.iter().cloned().sum::<f64>() / sd.len() as f64;
+    // println!("Noise floor: {:.3}", noise_floor);
 
     let _: complot::LinLog = (
         sd.frequency()
@@ -416,13 +411,14 @@ pub  fn freq_counter<T: std::hash::Hash + std::cmp::Eq+ Clone>(data: Vec<T>) -> 
     frequency
 }
 
+// DUMMY FOR NOW
 
-pub  fn  min_red(inp:HashMap<i32,u32>) {
-    let  cc = Coding::from_frequencies(BitsPerFragment(2),inp);
+pub  fn huff_code(inp:HashMap<i32,u32>) {
+    // let  cc = Coding::from_frequencies(BitsPerFragment(4),inp);
 
-    for (val, cde) in cc.codes_for_values() {
-        println!("The value is {} the code is {:#b}, {}",val,cde.content, cde.len);
-    }
+    // for (val, cde) in cc.codes_for_values() {
+    //     println!("The value is {} the code is {}, {}",val,cde.content, cde.len);
+    // }
     // println!("{:?}",cc.codes_for_values());
     // println!("{:?}",cc.values);
 
@@ -539,7 +535,7 @@ mod test {
     fn test_min_res(){
         let  dta:[(i32,u32);9]= [(0,3),(1,275),(-2,1),(4,1),(643,2),(14,5),(-5,1),(-11,1),(111,5)];
         let  inp:HashMap<i32,u32>=HashMap::from(dta);
-        min_red(inp);
+        huff_code(inp);
     }
 
 

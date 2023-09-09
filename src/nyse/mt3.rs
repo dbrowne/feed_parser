@@ -34,7 +34,7 @@
 // Symbol Index Mapping Message (Type 3)
 
 
-
+#[allow(dead_code)] //to be used in the future
 pub struct T3 {
     //symbol Index Mapping Message
     pub msg_type: u8,
@@ -53,7 +53,7 @@ pub struct T3 {
     pub unit_of_trade: i32,
 }
 
-
+#[allow(dead_code)]    //will be implemented in the future
 #[derive(PartialEq, Debug)]
 pub enum MarketID {
     NYSE,
@@ -83,7 +83,7 @@ impl MarketID {
     }
 }
 
-
+#[allow(dead_code)]    //will be implemented in the future
 #[derive(PartialEq, Debug)]
 pub enum SecurityType {
     ADR,
@@ -132,7 +132,7 @@ impl SecurityType {
 }
 
 
-
+#[allow(dead_code)]    //will be implemented in the future
 #[derive(PartialEq, Debug)]
 pub enum PriceResolution {
     AllPenny,

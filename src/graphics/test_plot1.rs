@@ -40,7 +40,6 @@ use plotly::{
     Plot,  Scatter};
 
 use rust_decimal::Decimal;
-use rust_decimal::prelude::ToPrimitive;
 use welch_sde::{Build, SpectralDensity};
 use crate::math_funcs::pre_processing::{detrend, power_spectrum, sd_graph};
 use crate::time_funcs::s2hhmmss_32;
@@ -131,7 +130,7 @@ pub fn test_plot_003(ticker:&str, time_series: Vec<(String, f32, i32)>, min_max:
     let mut title = String::new();
     let mut file_name = String::new();
 
-    fmt::write(&mut title, format_args!("{} Combined Jan 3 2023 ",ticker)).unwrap();
+    fmt::write(&mut title, format_args!("{} Combined Jan 3 2023 {} ticks ",ticker,time_line.len())).unwrap();
     fmt::write(&mut file_name, format_args!("plots/{}-combined.html",ticker)).unwrap();
     let layout = Layout::new()
         .height(2200)
@@ -180,8 +179,6 @@ pub fn test_plot_004(ticker:&str, time_series: Vec<(String, f32, f32)>, min_max:
     plot.add_trace(trace1);
     plot.add_trace(trace2);
 
-    let min_price = min_max.0.to_f32().unwrap();
-    let max_price = min_max.1.to_f32().unwrap();
 
     let mut title = String::new();
     let mut file_name = String::new();
@@ -222,7 +219,6 @@ pub fn test_plot_004(ticker:&str, time_series: Vec<(String, f32, f32)>, min_max:
 pub fn test_power_spec_graph(ticker:&str, time_series: Vec<(String, f32, i32)>, max_time:(i32, i32)) -> Result<(), Box<dyn Error>> {
     let mut time_line: Vec<String> = Vec::with_capacity(time_series.len());
     let mut price_line: Vec<f32> = Vec::with_capacity(time_series.len());
-    let mut fft_line: Vec<f32> = Vec::with_capacity(time_series.len());
 
 
     // max_per_second is the max number of tics per second and will be used to determine the frequency dist
@@ -230,9 +226,18 @@ pub fn test_power_spec_graph(ticker:&str, time_series: Vec<(String, f32, i32)>, 
         price_line.push(b);
     }
     let points:i32 = price_line.len() as i32;
+    if  points <2{
+        return Ok(());
+    }
     let samp_freq = 1.0/max_time.0 as f32;
 
     let  detrended_price = detrend(&price_line);
+    let  mut val = 0.0;
+    for x in detrended_price.iter(){
+        val +=x;
+    }
+    if val< 0.1 {return  Ok(());}
+
     let (pwer, _)     = power_spectrum(&detrended_price);
 
     for ctr in 0..pwer.len() {
@@ -286,7 +291,6 @@ pub fn test_power_spec_graph(ticker:&str, time_series: Vec<(String, f32, i32)>, 
 pub fn test_spectral_density_graph(ticker:&str, time_series: Vec<(String, f32, i32)>, max_time:(i32, i32)) -> Result<(), Box<dyn Error>> {
     let mut time_line: Vec<String> = Vec::with_capacity(time_series.len());
     let mut price_line: Vec<f32> = Vec::with_capacity(time_series.len());
-    let  fft_line: Vec<f32> = Vec::with_capacity(time_series.len());
 
 
     // max_per_second is the max number of tics per second and will be used to determine the frequency dist
@@ -294,9 +298,20 @@ pub fn test_spectral_density_graph(ticker:&str, time_series: Vec<(String, f32, i
         price_line.push(b);
     }
     let points:i32 = price_line.len() as i32;
+    if points <2{
+        return Ok(());
+    }
     let samp_freq = 1.0/max_time.0 as f32;
 
     let  detrended_price = detrend(&price_line);
+
+    let  mut val = 0.0;
+    for x in detrended_price.iter(){
+        val +=x;
+    }
+    if val < 0.1{
+        return Ok(());
+    }
     sd_graph(&detrended_price);
     let  welch: SpectralDensity<f32> = SpectralDensity::<f32>::builder(&detrended_price, samp_freq*512.0).build();
 

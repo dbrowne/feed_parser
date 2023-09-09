@@ -54,9 +54,7 @@ fn proc_dta(data_file: String) {
     println!("Processing file: {}", data_file);
     if let Ok(mut dta) = parsing::proc_file(&data_file) {
         let  mut new_stats = Stats::new();
-        for  in  {
-            
-        }
+
 
     }
 }
