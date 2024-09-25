@@ -1,0 +1,188 @@
+use std::fs::File;
+use std::io::Read;
+use std::os::raw::c_char;
+use std::ffi::CStr;
+use std::ptr;
+
+#[no_mangle]
+pub extern "C" fn get_file_size(path: *const c_char) -> i64 {
+    // Ensure the pointer is not null
+    if path.is_null() {
+        return -1; // Return -1 for null input
+    }
+
+    // Convert C string to Rust string
+    let c_str = unsafe { CStr::from_ptr(path) };
+    let file_path = match c_str.to_str() {
+        Ok(s) => s,
+        Err(_) => return -1, // Return -1 for invalid UTF-8 paths
+    };
+
+    // Open the file
+    let file = File::open(file_path);
+    let mut file = match file {
+        Ok(f) => f,
+        Err(_) => return -1, // Return -1 if file cannot be opened
+    };
+
+    // Read file size
+    let metadata = file.metadata();
+    match metadata {
+        Ok(m) => m.len() as i64,  // Return file size
+        Err(_) => -1,  // Return -1 if metadata cannot be fetched
+    }
+}
+
+
+
+
+use std::fs::File;
+use std::io::{Read, Result};
+use std::os::raw::c_char;
+use std::ffi::CStr;
+use std::ptr;
+use std::slice;
+
+#[no_mangle]
+pub extern "C" fn read_file_contents(path: *const c_char, out_size: *mut usize) -> *mut u8 {
+    // Ensure the path pointer is not null
+    if path.is_null() || out_size.is_null() {
+        return ptr::null_mut();
+    }
+
+    // Convert C string to Rust string
+    let c_str = unsafe { CStr::from_ptr(path) };
+    let file_path = match c_str.to_str() {
+        Ok(s) => s,
+        Err(_) => return ptr::null_mut(), // Return null pointer if path is invalid UTF-8
+    };
+
+    // Read the file into a Vec<u8>
+    let content = match read_file(file_path) {
+        Ok(data) => data,
+        Err(_) => return ptr::null_mut(), // Return null pointer if file cannot be read
+    };
+
+    // Set the out_size pointer to the length of the data
+    unsafe {
+        *out_size = content.len();
+    }
+
+    // Leak the Vec<u8> to raw memory to return it to the caller
+    let ptr = content.as_ptr() as *mut u8;
+    std::mem::forget(content); // Prevent Rust from deallocating the Vec
+
+    ptr
+}
+
+// Helper function to read a file's contents
+fn read_file(file_path: &str) -> Result<Vec<u8>> {
+    let mut file = File::open(file_path)?;
+    let mut buffer = Vec::new();
+    file.read_to_end(&mut buffer)?;
+    Ok(buffer)
+}
+
+#[no_mangle]
+pub extern "C" fn free_buffer(buffer: *mut u8, size: usize) {
+    if !buffer.is_null() {
+        unsafe {
+            // Rebuild the Vec<u8> and let it drop, deallocating memory
+            Vec::from_raw_parts(buffer, size, size);
+        }
+    }
+}
+
+use std::fs::File;
+use std::io::{Read, Result};
+use std::os::raw::{c_char, c_ulong};
+use std::ffi::CStr;
+use std::ptr;
+
+#[no_mangle]
+pub extern "C" fn read_file_to_buffer(path: *const c_char, buffer: *mut u8, buffer_size: c_ulong) -> c_ulong {
+    // Ensure the path and buffer pointers are not null
+    if path.is_null() || buffer.is_null() {
+        return 0; // Return 0 for null input
+    }
+
+    // Convert C string to Rust string
+    let c_str = unsafe { CStr::from_ptr(path) };
+    let file_path = match c_str.to_str() {
+        Ok(s) => s,
+        Err(_) => return 0, // Return 0 for invalid UTF-8 paths
+    };
+
+    // Read the file into a temporary Vec<u8>
+    let content = match read_file(file_path) {
+        Ok(data) => data,
+        Err(_) => return 0, // Return 0 if file cannot be read
+    };
+
+    // Check if the buffer size is sufficient
+    let content_len = content.len() as c_ulong;
+    if content_len > buffer_size {
+        return 0; // Return 0 if the buffer is too small
+    }
+
+    // Copy the file contents into the provided buffer
+    unsafe {
+        ptr::copy_nonoverlapping(content.as_ptr(), buffer, content_len as usize);
+    }
+
+    content_len // Return the number of bytes written
+}
+
+// Helper function to read a file's contents
+fn read_file(file_path: &str) -> Result<Vec<u8>> {
+    let mut file = File::open(file_path)?;
+    let mut buffer = Vec::new();
+    file.read_to_end(&mut buffer)?;
+    Ok(buffer)
+}
+
+
+use std::fs::File;
+use std::io::{self, Write};
+use rand::Rng;
+use std::os::raw::c_char;
+use std::ffi::CStr;
+use std::ptr;
+
+#[no_mangle]
+pub extern "C" fn create_random_file(path: *const c_char, n: u32) -> i32 {
+    // Ensure the path pointer is not null
+    if path.is_null() {
+        return -1; // Return -1 for null input
+    }
+
+    // Convert C string to Rust string
+    let c_str = unsafe { CStr::from_ptr(path) };
+    let file_path = match c_str.to_str() {
+        Ok(s) => s,
+        Err(_) => return -1, // Return -1 for invalid UTF-8 paths
+    };
+
+    // Create the file and write random characters to it
+    match write_random_chars_to_file(file_path, n) {
+        Ok(_) => 0, // Return 0 on success
+        Err(_) => -1, // Return -1 on failure
+    }
+}
+
+// Helper function to write n random characters to a file
+fn write_random_chars_to_file(file_path: &str, n: u32) -> io::Result<()> {
+    let mut file = File::create(file_path)?;
+
+    let mut rng = rand::thread_rng();
+    
+    for _ in 0..n {
+        // Generate a random ASCII character (printable range)
+        let random_char = rng.gen_range(b'!'..=b'~') as u8; // Random character in range '!' to '~'
+        file.write_all(&[random_char])?;
+    }
+    
+    Ok(())
+}
+
+
