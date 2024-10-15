@@ -186,3 +186,75 @@ fn write_random_chars_to_file(file_path: &str, n: u32) -> io::Result<()> {
 }
 
 
+extern crate yasna;
+
+fn parse_pkcs8_der_key(der: &[u8]) -> Result<(), &'static str> {
+    yasna::parse_ber(der, |reader| {
+        reader.read_sequence(|reader| {
+            // Read the version number (INTEGER)
+            let version = reader.next().read_u8()?;
+            if version != 0 {
+                return Err("Unsupported PKCS#8 version");
+            }
+
+            // Read the algorithm identifier SEQUENCE
+            reader.next().read_sequence(|reader| {
+                let oid = reader.next().read_oid()?;
+                if oid != yasna::models::ObjectIdentifier::from_slice(&[1, 2, 840, 113549, 1, 1, 1]) {
+                    return Err("Unsupported algorithm identifier");
+                }
+
+                // Read the NULL (parameters)
+                reader.next().read_null()?;
+                Ok(())
+            })?;
+
+            // Now read the private key as an OCTET STRING
+            let private_key = reader.next().read_bytes()?;
+            debug_log!("Private key (ASN.1-encoded): {:?}", private_key);
+
+            // Parse the RSA private key inside the OCTET STRING
+            yasna::parse_ber(&private_key, |reader| {
+                reader.read_sequence(|reader| {
+                    // Read the version number (INTEGER)
+                    let rsa_version = reader.next().read_u8()?;
+                    if rsa_version != 0 {
+                        return Err("Unsupported RSA version");
+                    }
+
+                    // Parse the RSA key components (modulus, exponents, primes, etc.)
+                    let (modulus, _) = reader.next().read_bigint_bytes()?;
+                    debug_log!("Modulus (n): {:?}", modulus);
+
+                    let (public_exponent, _) = reader.next().read_bigint_bytes()?;
+                    debug_log!("Public Exponent (e): {:?}", public_exponent);
+
+                    let (private_exponent, _) = reader.next().read_bigint_bytes()?;
+                    debug_log!("Private Exponent (d): {:?}", private_exponent);
+
+                    // Parse the rest of the RSA key (p, q, d mod (p-1), etc.)
+                    let (prime1, _) = reader.next().read_bigint_bytes()?;
+                    debug_log!("Prime 1 (p): {:?}", prime1);
+
+                    let (prime2, _) = reader.next().read_bigint_bytes()?;
+                    debug_log!("Prime 2 (q): {:?}", prime2);
+
+                    let (exponent1, _) = reader.next().read_bigint_bytes()?;
+                    debug_log!("Exponent 1 (d mod (p-1)): {:?}", exponent1);
+
+                    let (exponent2, _) = reader.next().read_bigint_bytes()?;
+                    debug_log!("Exponent 2 (d mod (q-1)): {:?}", exponent2);
+
+                    let (coefficient, _) = reader.next().read_bigint_bytes()?;
+                    debug_log!("Coefficient ((q^-1) mod p): {:?}", coefficient);
+
+                    Ok(())
+                })
+            })?;
+
+            Ok(())
+        })
+    }).map_err(|_| "Failed to parse PKCS#8 key")
+}
+
+
