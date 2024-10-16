@@ -257,4 +257,60 @@ fn parse_pkcs8_der_key(der: &[u8]) -> Result<(), &'static str> {
     }).map_err(|_| "Failed to parse PKCS#8 key")
 }
 
+#![no_std]
 
+use core::ptr::null_mut;
+
+#[repr(C)]
+pub struct BIGNUM;  // The BIGNUM structure from OpenSSL or sgx_ssl
+
+extern "C" {
+    fn BN_new() -> *mut BIGNUM;         // FFI to create a new BIGNUM
+    fn BN_bin2bn(s: *const u8, len: i32, ret: *mut BIGNUM) -> *mut BIGNUM;  // FFI to create BIGNUM from bytes
+    fn BN_free(bn: *mut BIGNUM);        // FFI to free the BIGNUM
+}
+
+pub struct BignumWrapper {
+    bn_ptr: *mut BIGNUM,
+}
+
+impl BignumWrapper {
+    // Constructor that wraps an existing BIGNUM pointer
+    pub fn new(bn_ptr: *mut BIGNUM) -> Self {
+        BignumWrapper { bn_ptr }
+    }
+
+    // Create a new BIGNUM from a byte slice
+    pub fn create_bn_from_bytes(bytes: &[u8]) -> Option<Self> {
+        let bn_ptr = unsafe { BN_new() };
+        if bn_ptr.is_null() {
+            return None;  // Allocation failed
+        }
+
+        // Convert bytes to BIGNUM using BN_bin2bn
+        let result = unsafe { BN_bin2bn(bytes.as_ptr(), bytes.len() as i32, bn_ptr) };
+        if result.is_null() {
+            // Free the BIGNUM if conversion failed
+            unsafe { BN_free(bn_ptr) };
+            None
+        } else {
+            Some(BignumWrapper { bn_ptr })
+        }
+    }
+
+    // Provide safe access to the internal raw pointer (if needed)
+    pub fn as_ptr(&self) -> *mut BIGNUM {
+        self.bn_ptr
+    }
+}
+
+impl Drop for BignumWrapper {
+    fn drop(&mut self) {
+        unsafe {
+            if !self.bn_ptr.is_null() {
+                BN_free(self.bn_ptr);  // Free the BIGNUM when the wrapper is dropped
+                self.bn_ptr = null_mut();  // Set pointer to null to avoid double free
+            }
+        }
+    }
+}
