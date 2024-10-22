@@ -314,3 +314,186 @@ impl Drop for BignumWrapper {
         }
     }
 }
+
+
+
+
+#![no_std]
+
+use serde::{Serialize, Serializer, Deserialize, Deserializer, ser::SerializeStruct};
+use core::fmt;
+use core::cmp::min;
+use serde::de::{Visitor, SeqAccess, MapAccess, Error};
+
+// Maximum size for source_data, adjust as needed
+const MAX_SOURCE_DATA_LEN: usize = 64;
+
+// Enum for CK_RSA_PKCS_OAEP_SOURCE_TYPE (e.g., CKZ_DATA_SPECIFIED)
+#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
+pub enum OaepSourceType {
+    DataSpecified = 1,
+}
+
+// Enum for CK_RSA_PKCS_MGF_TYPE (e.g., CKG_MGF1_SHA256)
+#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
+pub enum MgfType {
+    MGF1_SHA256 = 0x00000002,
+}
+
+// Enum for CK_MECHANISM_TYPE (e.g., CKM_SHA256)
+#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
+pub enum MechanismType {
+    SHA256 = 0x00000250,
+}
+
+// Struct for CK_RSA_PKCS_OAEP_PARAMS with a fixed-size array
+#[derive(Clone, Copy, Debug)]
+pub struct RsaOaepParams {
+    pub hash_alg: MechanismType,                   // Hash algorithm (e.g., SHA-256)
+    pub mgf: MgfType,                              // Mask generation function (e.g., MGF1-SHA256)
+    pub source: OaepSourceType,                    // Source type (e.g., DataSpecified)
+    pub source_data: [u8; MAX_SOURCE_DATA_LEN],    // Fixed-size array for source data
+    pub source_data_len: usize,                    // Length of actual data in source_data
+}
+
+// Implementing Default for RsaOaepParams
+impl Default for RsaOaepParams {
+    fn default() -> Self {
+        RsaOaepParams {
+            hash_alg: MechanismType::SHA256,
+            mgf: MgfType::MGF1_SHA256,
+            source: OaepSourceType::DataSpecified,
+            source_data: [0; MAX_SOURCE_DATA_LEN], // Default to zeroed array
+            source_data_len: 0,                    // No data by default
+        }
+    }
+}
+
+// Implementing Display
+impl fmt::Display for RsaOaepParams {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "RsaOaepParams {{\n  hash_alg: {:?},\n  mgf: {:?},\n  source: {:?},\n  source_data_len: {},\n  source_data: {:?}\n}}",
+            self.hash_alg,
+            self.mgf,
+            self.source,
+            self.source_data_len,
+            &self.source_data[..self.source_data_len], // Only display valid data
+        )
+    }
+}
+
+// Implement custom Serialize
+impl Serialize for RsaOaepParams {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("RsaOaepParams", 5)?;
+        state.serialize_field("hash_alg", &self.hash_alg)?;
+        state.serialize_field("mgf", &self.mgf)?;
+        state.serialize_field("source", &self.source)?;
+        state.serialize_field("source_data", &self.source_data[..self.source_data_len])?;
+        state.serialize_field("source_data_len", &self.source_data_len)?;
+        state.end()
+    }
+}
+
+// Custom deserialization implementation using Visitor
+struct RsaOaepParamsVisitor;
+
+impl<'de> Visitor<'de> for RsaOaepParamsVisitor {
+    type Value = RsaOaepParams;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a struct representing RsaOaepParams")
+    }
+
+    fn visit_seq<V>(self, mut seq: V) -> Result<RsaOaepParams, V::Error>
+    where
+        V: SeqAccess<'de>,
+    {
+        let hash_alg: MechanismType = seq.next_element()?.ok_or_else(|| V::Error::invalid_length(0, &self))?;
+        let mgf: MgfType = seq.next_element()?.ok_or_else(|| V::Error::invalid_length(1, &self))?;
+        let source: OaepSourceType = seq.next_element()?.ok_or_else(|| V::Error::invalid_length(2, &self))?;
+        let source_data: Vec<u8> = seq.next_element()?.ok_or_else(|| V::Error::invalid_length(3, &self))?;
+        let source_data_len: usize = seq.next_element()?.ok_or_else(|| V::Error::invalid_length(4, &self))?;
+
+        let mut fixed_source_data = [0u8; MAX_SOURCE_DATA_LEN];
+        let len = min(source_data.len(), MAX_SOURCE_DATA_LEN);
+        fixed_source_data[..len].copy_from_slice(&source_data[..len]);
+
+        Ok(RsaOaepParams {
+            hash_alg,
+            mgf,
+            source,
+            source_data: fixed_source_data,
+            source_data_len,
+        })
+    }
+
+    fn visit_map<M>(self, mut map: M) -> Result<RsaOaepParams, M::Error>
+    where
+        M: MapAccess<'de>,
+    {
+        let mut hash_alg = None;
+        let mut mgf = None;
+        let mut source = None;
+        let mut source_data = None;
+        let mut source_data_len = None;
+
+        while let Some(key) = map.next_key()? {
+            match key {
+                "hash_alg" => {
+                    hash_alg = Some(map.next_value()?);
+                }
+                "mgf" => {
+                    mgf = Some(map.next_value()?);
+                }
+                "source" => {
+                    source = Some(map.next_value()?);
+                }
+                "source_data" => {
+                    source_data = Some(map.next_value()?);
+                }
+                "source_data_len" => {
+                    source_data_len = Some(map.next_value()?);
+                }
+                _ => {}
+            }
+        }
+
+        let hash_alg = hash_alg.ok_or_else(|| M::Error::missing_field("hash_alg"))?;
+        let mgf = mgf.ok_or_else(|| M::Error::missing_field("mgf"))?;
+        let source = source.ok_or_else(|| M::Error::missing_field("source"))?;
+        let source_data = source_data.ok_or_else(|| M::Error::missing_field("source_data"))?;
+        let source_data_len = source_data_len.ok_or_else(|| M::Error::missing_field("source_data_len"))?;
+
+        let mut fixed_source_data = [0u8; MAX_SOURCE_DATA_LEN];
+        let len = min(source_data.len(), MAX_SOURCE_DATA_LEN);
+        fixed_source_data[..len].copy_from_slice(&source_data[..len]);
+
+        Ok(RsaOaepParams {
+            hash_alg,
+            mgf,
+            source,
+            source_data: fixed_source_data,
+            source_data_len,
+        })
+    }
+}
+
+// Implement custom Deserialize
+impl<'de> Deserialize<'de> for RsaOaepParams {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_struct(
+            "RsaOaepParams",
+            &["hash_alg", "mgf", "source", "source_data", "source_data_len"],
+            RsaOaepParamsVisitor,
+        )
+    }
+}
