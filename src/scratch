@@ -497,3 +497,139 @@ impl<'de> Deserialize<'de> for RsaOaepParams {
         )
     }
 }
+
+
+
+//
+
+fn encrypt_rsa_oaep(
+    pkey: *mut EVP_PKEY,
+    plaintext: &[u8],
+    ciphertext: &mut [u8],
+) -> Result<usize, &'static str> {
+    unsafe {
+        let ctx = EVP_PKEY_CTX_new(pkey, core::ptr::null_mut());
+        if ctx.is_null() {
+            return Err("Failed to create EVP context");
+        }
+
+        // Initialize encryption context
+        if EVP_PKEY_encrypt_init(ctx) <= 0 {
+            EVP_PKEY_CTX_free(ctx);
+            return Err("Failed to initialize encryption");
+        }
+
+        // Set RSA padding to RSA_PKCS1_OAEP_PADDING
+        if EVP_PKEY_CTX_set_rsa_padding(ctx, 4) <= 0 {  // 4 represents RSA_PKCS1_OAEP_PADDING
+            EVP_PKEY_CTX_free(ctx);
+            return Err("Failed to set RSA OAEP padding");
+        }
+
+        // Optionally, set the OAEP hash function (default is SHA-1, but you can set SHA-256)
+        if EVP_PKEY_CTX_set_rsa_oaep_md(ctx, EVP_sha256()) <= 0 {
+            EVP_PKEY_CTX_free(ctx);
+            return Err("Failed to set RSA OAEP hash function");
+        }
+
+        // First call EVP_PKEY_encrypt with a NULL output buffer to determine the required size
+        let mut outlen: usize = 0;
+        if EVP_PKEY_encrypt(ctx, core::ptr::null_mut(), &mut outlen, plaintext.as_ptr(), plaintext.len()) <= 0 {
+            EVP_PKEY_CTX_free(ctx);
+            return Err("Failed to determine ciphertext length");
+        }
+
+        // Check if output buffer is large enough
+        if outlen > ciphertext.len() {
+            EVP_PKEY_CTX_free(ctx);
+            return Err("Ciphertext buffer too small");
+        }
+
+        // Perform the encryption
+        if EVP_PKEY_encrypt(ctx, ciphertext.as_mut_ptr(), &mut outlen, plaintext.as_ptr(), plaintext.len()) <= 0 {
+            EVP_PKEY_CTX_free(ctx);
+            return Err("RSA encryption failed");
+        }
+
+        EVP_PKEY_CTX_free(ctx);
+        Ok(outlen)  // Return the number of encrypted bytes
+    }
+}
+
+
+//
+
+
+fn decrypt_rsa_oaep(
+    pkey: *mut EVP_PKEY,
+    ciphertext: &[u8],
+    plaintext: &mut [u8],
+) -> Result<usize, &'static str> {
+    unsafe {
+        let ctx = EVP_PKEY_CTX_new(pkey, core::ptr::null_mut());
+        if ctx.is_null() {
+            return Err("Failed to create EVP context");
+        }
+
+        // Initialize decryption context
+        if EVP_PKEY_decrypt_init(ctx) <= 0 {
+            EVP_PKEY_CTX_free(ctx);
+            return Err("Failed to initialize decryption");
+        }
+
+        // Set RSA padding to RSA_PKCS1_OAEP_PADDING
+        if EVP_PKEY_CTX_set_rsa_padding(ctx, 4) <= 0 {  // 4 represents RSA_PKCS1_OAEP_PADDING
+            EVP_PKEY_CTX_free(ctx);
+            return Err("Failed to set RSA OAEP padding");
+        }
+
+        // Optionally, set the OAEP hash function (default is SHA-1, but you can set SHA-256)
+        if EVP_PKEY_CTX_set_rsa_oaep_md(ctx, EVP_sha256()) <= 0 {
+            EVP_PKEY_CTX_free(ctx);
+            return Err("Failed to set RSA OAEP hash function");
+        }
+
+        // First call EVP_PKEY_decrypt with a NULL output buffer to determine the required size
+        let mut outlen: usize = 0;
+        if EVP_PKEY_decrypt(ctx, core::ptr::null_mut(), &mut outlen, ciphertext.as_ptr(), ciphertext.len()) <= 0 {
+            EVP_PKEY_CTX_free(ctx);
+            return Err("Failed to determine plaintext length");
+        }
+
+        // Check if output buffer is large enough
+        if outlen > plaintext.len() {
+            EVP_PKEY_CTX_free(ctx);
+            return Err("Plaintext buffer too small");
+        }
+
+        // Perform the decryption
+        if EVP_PKEY_decrypt(ctx, plaintext.as_mut_ptr(), &mut outlen, ciphertext.as_ptr(), ciphertext.len()) <= 0 {
+            EVP_PKEY_CTX_free(ctx);
+            return Err("RSA decryption failed");
+        }
+
+        EVP_PKEY_CTX_free(ctx);
+        Ok(outlen)  // Return the number of decrypted bytes
+    }
+}
+
+
+//
+
+fn main() {
+    let rsa_public_key: *mut EVP_PKEY = load_rsa_public_key();  // Load your public key here
+    let plaintext = b"Hello, RSA OAEP with EVP!";
+    let mut ciphertext = [0u8; 256];  // Size should match RSA key size (e.g., 2048-bit RSA = 256 bytes)
+
+    match encrypt_rsa_oaep(rsa_public_key, plaintext, &mut ciphertext) {
+        Ok(ciphertext_len) => {
+            println!("Encrypted data: {:?}", &ciphertext[..ciphertext_len]);
+        }
+        Err(e) => {
+            eprintln!("Encryption error: {}", e);
+        }
+    }
+
+    EVP_PKEY_free(rsa_public_key);  // Free the public key
+}
+
+
