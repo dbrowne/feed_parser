@@ -633,3 +633,99 @@ fn main() {
 }
 
 
+
+
+use libc::{fd_set, select, timeval, FD_ISSET, FD_SET, FD_ZERO};
+use std::os::raw::c_int;
+use std::time::Duration;
+
+/// Enum representing the readiness state of a socket.
+#[repr(C)]
+pub enum SocketReadiness {
+    /// Indicates that the socket is ready to be read.
+    ReadyToRead = 1,
+    /// Indicates that the socket is in a pending state due to a timeout.
+    Pending = 0,
+    /// Indicates that an error occurred while checking socket readiness.
+    Error = -1,
+}
+
+/// Checks if a socket file descriptor is ready to read within a specified timeout.
+///
+/// This function performs a non-blocking check on a socket file descriptor using the `select`
+/// system call. The function determines if data is available to read on the file descriptor
+/// within the specified timeout period. The result is returned through an output parameter
+/// as an integer representing the readiness state.
+///
+/// # Parameters
+///
+/// - `fd`: The file descriptor of the socket to check for readiness.
+/// - `timeout_secs`: The timeout duration in seconds to wait for the socket to become ready.
+/// - `readiness_status`: A pointer to an integer where the function will store the result
+///   of the readiness check. The possible values are:
+///   - `1` (`SocketReadiness::ReadyToRead`): The socket is ready to be read.
+///   - `0` (`SocketReadiness::Pending`): The socket is not ready, and the timeout expired.
+///   - `-1` (`SocketReadiness::Error`): An error occurred while checking readiness.
+///
+/// # Safety
+///
+/// This function uses `unsafe` blocks for interacting with raw pointers and making system calls.
+/// It is the caller's responsibility to ensure that `fd` is a valid socket file descriptor and that
+/// `readiness_status` is a valid pointer to an `int`.
+///
+/// # Examples
+///
+/// ```rust
+/// extern "C" {
+///     fn check_socket_readiness_ocall(fd: c_int, timeout_secs: u32, readiness_status: *mut c_int);
+/// }
+///
+/// let mut readiness_status = 0;
+/// unsafe {
+///     check_socket_readiness_ocall(socket_fd, 5, &mut readiness_status);
+/// }
+///
+/// match readiness_status {
+///     1 => println!("Socket is ready to read."),
+///     0 => println!("Socket is in pending state (timeout expired)."),
+///    -1 => println!("An error occurred while checking socket readiness."),
+///     _ => println!("Unexpected readiness status."),
+/// }
+/// ```
+///
+/// # Implementation Details
+///
+/// This function uses `select` to check if the file descriptor is ready for reading. The `fd_set`
+/// structure and `timeval` timeout are configured accordingly, and the result from `select`
+/// is mapped to the corresponding `SocketReadiness` state.
+#[no_mangle]
+pub extern "C" fn check_socket_readiness_ocall(fd: c_int, timeout_secs: u32, readiness_status: *mut c_int) {
+    // Initialize an empty `fd_set` to hold file descriptors for `select`
+    let mut read_fds: fd_set = unsafe { std::mem::zeroed() };
+
+    // Use `FD_ZERO` and `FD_SET` to configure `read_fds` for the specified file descriptor
+    unsafe {
+        FD_ZERO(&mut read_fds);    // Clear all bits in the `fd_set`
+        FD_SET(fd, &mut read_fds); // Add `fd` to the `fd_set`
+    }
+
+    // Set up the timeout for `select`
+    let mut timeout = timeval {
+        tv_sec: timeout_secs as i64,
+        tv_usec: 0,
+    };
+
+    // Call `select` to check if `fd` is ready for reading within the timeout period
+    let result = unsafe { select(fd + 1, &mut read_fds, std::ptr::null_mut(), std::ptr::null_mut(), &mut timeout) };
+
+    // Determine the readiness based on the result from `select`
+    let readiness = match result {
+        -1 => SocketReadiness::Error as c_int,             // Error occurred
+         0 => SocketReadiness::Pending as c_int,           // Timeout, no data available
+         _ if unsafe { FD_ISSET(fd, &read_fds) } => SocketReadiness::ReadyToRead as c_int, // Data ready to read
+         _ => SocketReadiness::Error as c_int,             // Unexpected case, treat as error
+    };
+
+    // Set the output parameter to the readiness status
+    unsafe { *readiness_status = readiness };
+}
