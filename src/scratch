@@ -729,3 +729,94 @@ pub extern "C" fn check_socket_readiness_ocall(fd: c_int, timeout_secs: u32, rea
     // Set the output parameter to the readiness status
     unsafe { *readiness_status = readiness };
 }
+
+use std::os::unix::io::AsRawFd;
+use std::os::raw::c_int;
+use libc::{socketpair, AF_UNIX, SOCK_STREAM};
+use std::io::Write;
+use std::ptr;
+use std::time::Duration;
+
+/// Enum representing the readiness state of a socket.
+#[repr(C)]
+pub enum SocketReadiness {
+    ReadyToRead = 1,
+    Pending = 0,
+    Error = -1,
+}
+
+extern "C" {
+    fn check_socket_readiness_ocall(fd: c_int, timeout_secs: u32, readiness_status: *mut c_int);
+}
+
+fn create_socketpair() -> (c_int, c_int) {
+    let mut fds = [0; 2];
+    let result = unsafe { socketpair(AF_UNIX, SOCK_STREAM, 0, fds.as_mut_ptr()) };
+    assert_eq!(result, 0, "Failed to create socket pair");
+    (fds[0], fds[1])
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::os::raw::c_int;
+
+    #[test]
+    fn test_socket_ready_to_read() {
+        let (fd1, fd2) = create_socketpair();
+
+        // Write some data to make `fd1` ready to read
+        let data = b"Hello";
+        unsafe {
+            libc::write(fd2, data.as_ptr() as *const _, data.len());
+        }
+
+        let mut readiness_status: c_int = 0;
+        unsafe {
+            check_socket_readiness_ocall(fd1, 5, &mut readiness_status);
+        }
+
+        // `fd1` should be ready to read since data was written to `fd2`
+        assert_eq!(readiness_status, SocketReadiness::ReadyToRead as c_int);
+
+        // Close file descriptors
+        unsafe {
+            libc::close(fd1);
+            libc::close(fd2);
+        }
+    }
+
+    #[test]
+    fn test_socket_pending() {
+        let (fd1, fd2) = create_socketpair();
+
+        let mut readiness_status: c_int = 0;
+        unsafe {
+            // Check readiness with a short timeout. No data is written, so it should time out.
+            check_socket_readiness_ocall(fd1, 1, &mut readiness_status);
+        }
+
+        // `fd1` should be in a pending state because no data is available and the timeout expired
+        assert_eq!(readiness_status, SocketReadiness::Pending as c_int);
+
+        // Close file descriptors
+        unsafe {
+            libc::close(fd1);
+            libc::close(fd2);
+        }
+    }
+
+    #[test]
+    fn test_socket_error() {
+        let invalid_fd = -1; // Invalid file descriptor
+
+        let mut readiness_status: c_int = 0;
+        unsafe {
+            // Using an invalid file descriptor should result in an error
+            check_socket_readiness_ocall(invalid_fd, 1, &mut readiness_status);
+        }
+
+        // Since `invalid_fd` is not valid, we should get an error state
+        assert_eq!(readiness_status, SocketReadiness::Error as c_int);
+    }
+}
