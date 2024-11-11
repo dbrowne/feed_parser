@@ -820,3 +820,21 @@ mod tests {
         assert_eq!(readiness_status, SocketReadiness::Error as c_int);
     }
 }
+use aes_gcm::aead::{Aead, KeyInit, OsRng};
+use aes_gcm::{Aes256Gcm, Nonce};
+
+fn main() {
+    let key = Aes256Gcm::generate_key(&mut OsRng);
+    let cipher = Aes256Gcm::new(&key);
+
+    let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
+    let plaintext = b"Hello, AES-GCM!";
+    let ciphertext = cipher.encrypt(&nonce, plaintext.as_ref())
+        .expect("encryption failure!");
+
+    let decrypted_text = cipher.decrypt(&nonce, ciphertext.as_ref())
+        .expect("decryption failure!");
+
+    assert_eq!(&decrypted_text, plaintext);
+    println!("Decrypted text: {:?}", decrypted_text);
+}
