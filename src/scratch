@@ -1,3 +1,97 @@
+#![cfg_attr(not(feature = "std"), no_std)]
+
+extern crate alloc;
+
+use alloc::string::String;
+use alloc::fmt::{self, Write};
+use core::fmt::Arguments;
+
+#[cfg(feature = "std")]
+use std::sync::Mutex;
+#[cfg(not(feature = "std"))]
+use spin::Mutex;
+
+// Define the global logger static
+#[cfg(feature = "std")]
+static LOGGER: Mutex<Logger> = Mutex::new(Logger);
+
+#[cfg(not(feature = "std"))]
+static LOGGER: Mutex<Logger> = Mutex::new(Logger);
+
+/// The Logger struct
+pub struct Logger;
+
+impl Logger {
+    pub fn log(&self, level: usize, args: Arguments, module_path: &str, line: u32) {
+        // Format the log message
+        let mut log_message = String::new();
+        let _ = write!(
+            &mut log_message,
+            "[Level {}] {}:{}: {}\n",
+            level, module_path, line, args
+        );
+
+        // Output the log message
+        #[cfg(feature = "std")]
+        {
+            eprint!("{}", log_message);
+        }
+
+        #[cfg(not(feature = "std"))]
+        {
+            unsafe {
+                use core::fmt::Write;
+                let _ = ConsoleWriter.write_str(&log_message);
+            }
+        }
+    }
+}
+
+/// Log function that can be called in a multi-threaded environment
+pub fn log(level: usize, args: Arguments, module_path: &str, line: u32) {
+    let logger = LOGGER.lock();
+    logger.log(level, args, module_path, line);
+}
+
+/// A simple console writer for no_std environments
+#[cfg(not(feature = "std"))]
+struct ConsoleWriter;
+
+#[cfg(not(feature = "std"))]
+impl Write for ConsoleWriter {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        // This is a placeholder for your specific no_std environment's console output.
+        // Replace this with the appropriate system call or hardware interface.
+        for byte in s.as_bytes() {
+            unsafe {
+                core::ptr::write_volatile(0x1000_0000 as *mut u8, *byte);
+            }
+        }
+        Ok(())
+    }
+}
+
+/// Example usage
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[cfg(feature = "std")]
+    fn test_std_logging() {
+        log(1, format_args!("This is a test log message"), "test_module", 42);
+    }
+
+    #[test]
+    #[cfg(not(feature = "std"))]
+    fn test_no_std_logging() {
+        log(1, format_args!("This is a test log message"), "test_module", 42);
+    }
+}
+
+
+
+
 #[cfg(not(feature = "std"))]
 use mc_sgx_panic::set_panic_handler;
 
