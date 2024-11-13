@@ -2,6 +2,113 @@
 
 extern crate alloc;
 
+use alloc::fmt::Arguments;
+use core::sync::atomic::{AtomicPtr, Ordering};
+use core::ptr;
+use core::cell::UnsafeCell;
+
+#[derive(Clone, Copy)]
+pub enum LogLevel {
+    Error,
+    Warn,
+    Info,
+    Debug,
+    Trace,
+}
+
+pub type LogFn = fn(level: usize, args: Arguments, module_path: &str, line: u32);
+
+pub struct Logger {
+    pub level: LogLevel,
+    pub log_fn: LogFn,
+}
+
+// A global logger instance managed as a pointer.
+static LOGGER_PTR: AtomicPtr<Logger> = AtomicPtr::new(ptr::null_mut());
+
+/// Ensures thread-safe initialization and updates to the global logger.
+pub fn set_log_function(log_function: Logger) {
+    // Create a Box for the logger to ensure its memory remains valid.
+    let logger_box = Box::new(log_function);
+    let logger_ptr = Box::into_raw(logger_box);
+
+    // Swap the global logger with the new logger.
+    let old_ptr = LOGGER_PTR.swap(logger_ptr, Ordering::SeqCst);
+
+    // If there was an existing logger, clean up its memory.
+    if !old_ptr.is_null() {
+        unsafe {
+            Box::from_raw(old_ptr);
+        }
+    }
+}
+
+/// Logs a message using the global logger.
+/// 
+/// # Arguments
+/// - `level`: The log level.
+/// - `args`: The message to log.
+/// - `module_path`: The module path from where the log was called.
+/// - `line`: The line number from where the log was called.
+pub fn log(level: usize, args: Arguments, module_path: &str, line: u32) {
+    // Retrieve the global logger.
+    let logger_ptr = LOGGER_PTR.load(Ordering::SeqCst);
+
+    if logger_ptr.is_null() {
+        return; // No logger is set, so nothing to log.
+    }
+
+    // Safety: LOGGER_PTR is valid if set_log_function was called correctly.
+    let logger = unsafe { &*logger_ptr };
+
+    // Only log messages at or above the logger's level.
+    (logger.log_fn)(level, args, module_path, line);
+}
+
+/// Example log function for testing.
+fn example_log_fn(level: usize, args: Arguments, module_path: &str, line: u32) {
+    #[cfg(feature = "std")]
+    {
+        eprintln!("[{}] {}:{} - {}", level, module_path, line, args);
+    }
+
+    #[cfg(not(feature = "std"))]
+    {
+        unsafe {
+            for byte in format!("[{}] {}:{} - {}\n", level, module_path, line, args).as_bytes() {
+                core::ptr::write_volatile(0x1000_0000 as *mut u8, *byte);
+            }
+        }
+    }
+}
+
+/// Example usage.
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_logger() {
+        // Set a test logger.
+        set_log_function(Logger {
+            level: LogLevel::Info,
+            log_fn: example_log_fn,
+        });
+
+        // Log a message.
+        log(1, format_args!("This is a test message"), "test_module", 42);
+    }
+}
+
+
+
+
+
+
+#![cfg_attr(not(feature = "std"), no_std)]
+
+extern crate alloc;
+
 use alloc::string::String;
 use alloc::fmt::{self, Write};
 use core::fmt::Arguments;
