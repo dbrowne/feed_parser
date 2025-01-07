@@ -1060,3 +1060,78 @@ fn main() {
     assert_eq!(&decrypted_text, plaintext);
     println!("Decrypted text: {:?}", decrypted_text);
 }
+
+
+
+# Security Advisory Summary
+
+This document provides an overview of two security advisories affecting Rust crates: `RUSTSEC-2023-0071` and `RUSTSEC-2024-0421`. It outlines the nature of each vulnerability, their potential impacts, and recommended actions for mitigation.
+
+---
+
+## **RUSTSEC-2023-0071: Marvin Attack on `rsa` Crate**
+
+- **Advisory ID:** RUSTSEC-2023-0071  
+- **Date Reported:** November 22, 2023  
+- **Crate:** `rsa`  
+- **Severity:** Medium (CVSS Score: 5.9)  
+- **Aliases:** CVE-2023-49092, GHSA-c38w-74pg-36hr, GHSA-4grx-2x9w-596c  
+- **References:**  
+  - [RustSec Advisory](https://rustsec.org/advisories/RUSTSEC-2023-0071.html)  
+  - [Debian Bug Report](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1057096)  
+
+### **Description**
+
+The `rsa` crate is susceptible to a timing side-channel vulnerability known as the "Marvin Attack." Due to a non-constant-time implementation, private key information can be leaked through timing variations observable over a network. An attacker with the capability to measure these timing differences may potentially recover the private key.
+
+### **Impact**
+
+- **Confidentiality:** High risk of private key exposure.  
+- **Integrity:** No direct impact.  
+- **Availability:** No direct impact.  
+
+### **Mitigation**
+
+- **Patches:** No patched versions are available yet. Efforts are underway to transition to a fully constant-time implementation.  
+- **Workarounds:** Avoid using the `rsa` crate in environments where attackers can observe timing information. Local use on a secure, non-compromised system is considered safe.
+
+---
+
+## **RUSTSEC-2024-0421: Vulnerability in `idna` Crate**
+
+- **Advisory ID:** RUSTSEC-2024-0421  
+- **Date Reported:** December 9, 2024  
+- **Crate:** `idna`  
+- **Severity:** Medium  
+- **Aliases:** CVE-2024-12224  
+- **References:**  
+  - [RustSec Advisory](https://rustsec.org/advisories/RUSTSEC-2024-0421)  
+  - [Debian Security Tracker](https://security-tracker.debian.org/tracker/CVE-2024-12224)  
+
+### **Description**
+
+The `idna` crate versions 0.5.0 and earlier accept Punycode labels that decode to ASCII-only outputs, including empty labels. This behavior can cause domain names to appear unequal without IDNA processing or when processed with different implementations but become equal when processed by `idna` 0.5.0 or earlier. For example:
+
+- `example.org` and `xn--example-.org` are treated as equal.
+- `example.org.xn--` and `example.org.` are treated as equal.
+
+This discrepancy may lead to privilege escalation in applications where hostname comparison is part of a security check, especially if an attacker can introduce a DNS entry and obtain a TLS certificate for a masked name that resolves to a target name when processed by vulnerable versions of `idna`.
+
+### **Impact**
+
+- **Privilege Escalation:** Potential risk if hostname comparisons are used in security contexts.
+
+### **Mitigation**
+
+- **Upgrade:** Update to `idna` version 1.0.3 or later. If `idna` is used indirectly via the `url` crate, ensure `url` is updated to version 2.5.4 or later.  
+- **Additional Considerations:** Review alternative Unicode backends for `idna`. Users on Rust versions earlier than 1.81 combined with `SQLx` 0.8.2 or earlier should consult relevant issues regarding compatibility with `url` 2.5.4 and `idna` 1.0.3.
+
+---
+
+## **General Recommendations**
+
+- **Regular Audits:** Periodically run `cargo audit` to identify and address vulnerabilities in dependencies.  
+- **Stay Informed:** Monitor advisories from the [RustSec Advisory Database](https://rustsec.org/advisories/) to stay updated on security issues affecting Rust crates.  
+- **Implement Best Practices:** Employ security best practices, such as using constant-time implementations for cryptographic operations and validating third-party crates for potential vulnerabilities.
+
+By adhering to these guidelines and promptly addressing reported vulnerabilities, developers can enhance the security and integrity of their Rust applications.
